@@ -1,14 +1,12 @@
 use std::{
     collections::HashMap,
-    ops::{Div, Range},
+    ops::Range,
 };
-
-use euclid::num::Round;
-use log::{error, info, trace, warn};
 
 use crate::{
     data::{GridPos, GridSize, MapGrid},
     gen::rooms::{Room, RoomSize},
+    logging::{info, trace, warn},
     util::math::get_curve_between,
 };
 
@@ -49,6 +47,9 @@ impl From<GridClassification> for usize {
     }
 }
 
+/// Probably need to clean this up.
+/// 
+/// TODO: Clean this up.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClassificationResult {
     rows: usize,
@@ -58,6 +59,8 @@ pub struct ClassificationResult {
 }
 
 impl ClassificationResult {
+    /// Constructor
+    #[must_use]
     pub fn new<Pos: Into<GridSize>>(size: Pos) -> Self {
         let (x, y) = size.into().into();
         Self {
@@ -68,6 +71,8 @@ impl ClassificationResult {
         }
     }
 
+    /// Classify a grid based on it's size.
+    #[must_use]
     pub fn classify(grid_size: GridSize) -> Self {
         let (cols, rows) = grid_size.into();
         let rows_class = GridClassification::classify_rows(rows);
@@ -80,10 +85,14 @@ impl ClassificationResult {
         }
     }
 
+    /// Get the number of cells this classification result is based on.
+    #[must_use]
     pub fn cells(&self) -> usize {
         self.rows * self.cols
     }
 
+    /// Get the classification for this number of cells.
+    #[must_use]
     pub fn cells_class(&self) -> GridClassification {
         let cells = self.cells();
         GridClassification::classify_cells(cells)
@@ -91,6 +100,8 @@ impl ClassificationResult {
 }
 
 impl GridClassification {
+    /// Classify a number of rows.
+    #[must_use] 
     pub fn classify_rows(rows: usize) -> Self {
         match rows {
             3 | 4 => Self::TooSmall,
@@ -104,6 +115,8 @@ impl GridClassification {
         }
     }
 
+    /// Gets the range of number that this classification is valid for.
+    #[must_use] 
     pub fn row_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..5,
@@ -117,6 +130,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the maximum number of rows in this classification.
+    #[must_use] 
     pub fn row_max(self) -> usize {
         match self {
             Self::TooSmall => 5,
@@ -130,6 +145,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the minimum number of rows in this classification.
+    #[must_use] 
     pub fn row_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -143,6 +160,8 @@ impl GridClassification {
         }
     }
 
+    /// Classify the number of columns given.
+    #[must_use] 
     pub fn classify_cols(cols: usize) -> Self {
         match cols {
             3..=8 => Self::TooSmall,
@@ -156,6 +175,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the range for which this classification is valid.
+    #[must_use] 
     pub fn col_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..9,
@@ -169,6 +190,8 @@ impl GridClassification {
         }
     }
 
+    /// The maxmimum number of columns this classification is valid for.
+    #[must_use] 
     pub fn col_max(self) -> usize {
         match self {
             Self::TooSmall => 9,
@@ -182,6 +205,8 @@ impl GridClassification {
         }
     }
 
+    /// The minimum number of columns this classification is valid for.
+    #[must_use] 
     pub fn col_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -195,6 +220,8 @@ impl GridClassification {
         }
     }
 
+    /// Classify the number of cells given.
+    #[must_use] 
     pub fn classify_cells(cells: usize) -> Self {
         match cells {
             3..=44 => Self::TooSmall,
@@ -207,6 +234,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the range of number which makes up this classification.
+    #[must_use] 
     pub fn cell_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..45,
@@ -220,6 +249,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the maximum number of cells this classification is valid for.
+    #[must_use] 
     pub fn cell_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -233,6 +264,8 @@ impl GridClassification {
         }
     }
 
+    /// Get the minimum number of cells this classification is valid for.
+    #[must_use] 
     pub fn cell_max(self) -> usize {
         match self {
             Self::TooSmall => 45,
@@ -262,9 +295,12 @@ impl From<usize> for GridClassification {
     }
 }
 
+/// Static struct holding room based generation methods.
 pub struct RoomBasedGen;
 
 impl RoomBasedGen {
+    /// "Basic" Room Based Generator
+    #[must_use] 
     pub fn basic(size: GridSize) -> MapGrid {
         trace!("RoomGen::basic({:?})", size);
         let (map_width, map_height) = size.into();
@@ -286,8 +322,8 @@ impl RoomBasedGen {
             warn!("Room generation iteration {}/{}", i + 1, max_rooms);
             let mut x = fastrand::usize(0..map_width);
             let mut y = fastrand::usize(0..map_height);
-            let mut w = fastrand::usize(width_range.clone());
-            let mut h = fastrand::usize(height_range.clone());
+            let w = fastrand::usize(width_range.clone());
+            let h = fastrand::usize(height_range.clone());
             warn!(
                 "  Initial generated numbers:\nx = {}, y = {}, w = {}, h = {}",
                 x, y, w, h
@@ -330,7 +366,12 @@ impl RoomBasedGen {
         map
     }
 
+    /// "Tiered" Room Based Generator
+    /// 
+    /// ### Panics
+    /// - Function panics if it takes more than 10000 total iterations to generate the map.
     #[allow(clippy::too_many_lines)]
+    #[must_use] 
     pub fn tiered(size: GridSize) -> MapGrid {
         trace!("RoomGen::tiered({:?})", size);
         let (map_width, map_height) = size.into();
@@ -626,12 +667,17 @@ impl RoomBasedGen {
         }
     }
 
+    /// "Tiered" "Heuristic" Room Based Generator
+    /// 
+    /// ### Panics
+    /// - Function panics if it takes more than 10000 total iterations to generate the map.
     #[allow(
         clippy::cast_precision_loss,
         clippy::cast_sign_loss,
         clippy::too_many_lines,
         clippy::cast_possible_truncation
     )]
+    #[must_use] 
     pub fn tiered_heuristic(size: GridSize) -> MapGrid {
         struct RoomDims {
             count: Range<usize>,

@@ -1,15 +1,20 @@
 use std::ops::Range;
 
 use crate::{
-    data::{square, Cell, GridSquare, MapGrid},
+    data::{square, GridSquare, MapGrid},
     logging::trace,
 };
 
+/// Different sizes for rooms.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RoomSize {
+    /// A small room.
     Small,
+    /// A medium room.
     Medium,
+    /// A big room.
     Big,
+    /// A huge room.
     Huge,
 }
 
@@ -27,14 +32,19 @@ impl RoomSize {
     }
 }
 
+/// A room for the [`crate::gen::RoomBasedGenerator`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Room(GridSquare);
 
 impl Room {
+    /// Create a new [`Room`] from the upper left and width and height.
+    #[must_use] 
     pub fn new(upper_left: (usize, usize), width: usize, height: usize) -> Self {
         Self(square(&upper_left, width, height))
     }
 
+    /// Creates a new [`Room`] within the ranges provided.
+    #[must_use] 
     pub fn random(
         start_x_range: Range<usize>,
         start_y_range: Range<usize>,
@@ -78,10 +88,14 @@ impl Room {
         Room::new((left, upper), width, height)
     }
 
+    /// Check whether the `first` room intersects with the `second`.
+    #[must_use] 
     pub fn check_intersects(first: &Self, other: &Self) -> bool {
         first.0.intersects(&other.0)
     }
 
+    /// Checks whether the `room` fits within the `grid`.
+    #[must_use] 
     pub fn fits_in_grid(room: &Self, grid: &MapGrid) -> bool {
         room.0.min.x < grid.cols()
             && room.0.min.y < grid.rows()
@@ -91,10 +105,14 @@ impl Room {
 }
 
 impl Room {
+    /// Check whether this room intersects with `other`.
+    #[must_use] 
     pub fn intersects(&self, other: &Self) -> bool {
         Self::check_intersects(self, other)
     }
 
+    /// Checks whether this room, plus the `buffer` (on all sides), intersects with `other`.
+    #[must_use] 
     pub fn intersects_with_buffer(&self, other: &Self, buffer: usize) -> bool {
         let mut room = *self;
         room.0.min.x -= if room.0.min.x > buffer { buffer } else { 0 };
@@ -105,10 +123,14 @@ impl Room {
         Self::check_intersects(&room, other)
     }
 
+    /// Gets the inner [`GridSquare`] of this [`Room`].
+    #[must_use] 
     pub fn square(&self) -> GridSquare {
         self.0
     }
 
+    /// Get a vec containing the positions of each cell in the edge of this [`Room`].
+    #[must_use] 
     pub fn get_edges(&self) -> Vec<(usize, usize)> {
         let mut edges = Vec::new();
         let (min_x, min_y) = self.0.min.into();

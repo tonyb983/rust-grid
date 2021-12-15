@@ -8,6 +8,7 @@
 // TODO At some point I should probably update this with the features I'm actually using.
 #![feature(
     associated_type_defaults,
+    backtrace,
     inline_const,
     concat_idents,
     crate_visibility_modifier,

@@ -3,30 +3,45 @@ use crate::{
     logging::{trace, warn},
 };
 
+/// The arguments for the first, basic version, of the cellular automata algorithm. This should be created
+/// by calling [`Algorithm::first`] or [`Algorithm::default_first`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FirstAlgArgs {
     on_min: usize,
     off_min: usize,
 }
 
+/// The argument for the flexible version of the cellular automata algorithm. It contains a predicate
+/// that is passed the cell location, and the number of cells that are on in a 3x3 radius, and
+/// the state of the current cell. This should be created by calling [`Algorithm::flex`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FlexArgs {
     predicate: fn((usize, usize), usize, bool) -> bool,
 }
 
+/// The argument for the second flexible version of the cellular automata algorithm. It contains a predicate
+/// that is passed the cell location, and the number of cells that are on in a 5x5 radius, in a 3x3 radius
+/// and the state of the current cell. This should be created by calling [`Algorithm::flex2`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Flex2Args {
     predicate: fn((usize, usize), usize, usize, bool) -> bool,
 }
 
+/// This enum is used to pass arguments to the [`CellularAutomata`] runner.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Algorithm {
+    /// The first version arguments. See [`FirstAlgArgs`].
     First(FirstAlgArgs),
+    /// The flexible version arguments. See [`FlexArgs`].
     Flex(FlexArgs),
+    /// The second version arguments. See [`Flex2Args`].
     Flex2(Flex2Args)
 }
 
 impl Algorithm {
+    /// The default version of the basic cellular automata algorithm. Uses 4 as the minimum to turn a
+    /// cell on if it is already on, and 5 to turn it on if it is not on.
+    #[must_use] 
     pub fn default_first() -> Self {
         Algorithm::First(FirstAlgArgs {
             on_min: 4,
@@ -34,14 +49,20 @@ impl Algorithm {
         })
     }
 
+    /// Use the basic algorithm with the given on and off minimums.
+    #[must_use] 
     pub fn first(on_min: usize, off_min: usize) -> Self {
         Self::First(FirstAlgArgs { on_min, off_min })
     }
 
+    /// Create a flexible version of the algorithm that uses the provided predicate.
+    #[must_use] 
     pub fn flex(predicate: fn((usize, usize), usize, bool) -> bool) -> Self {
         Self::Flex(FlexArgs { predicate })
     }
 
+    /// Create a flexible (second) version of the algorithm that uses the provided predicate.
+    #[must_use] 
     pub fn flex2(predicate: fn((usize, usize), usize, usize, bool) -> bool) -> Self {
         Self::Flex2(Flex2Args { predicate })
     }

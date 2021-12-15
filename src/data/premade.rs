@@ -73,6 +73,19 @@ impl GridStrings {
             GridStrings::Invalid => None,
         }
     }
+
+    /// Get all [`GridStrings`].
+    #[must_use] 
+    pub const fn all() -> [GridStrings; 6] {
+        [
+            GridStrings::One,
+            GridStrings::Two,
+            GridStrings::Three,
+            GridStrings::Four,
+            GridStrings::Five,
+            GridStrings::Six,
+        ]
+    }
 }
 
 impl From<usize> for GridStrings {
@@ -121,6 +134,17 @@ impl GridFiles {
             GridFiles::Four => PremadeGrids::file_maze4(),
             GridFiles::Invalid => None,
         }
+    }
+
+    /// Get all [`GridFiles`].
+    #[must_use] 
+    pub const fn all() -> [GridFiles; 4] {
+        [
+            GridFiles::One,
+            GridFiles::Two,
+            GridFiles::Three,
+            GridFiles::Four,
+        ]
     }
 }
 

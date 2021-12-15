@@ -5,7 +5,7 @@
 //! Eventual goal is to have a library that creates "dungeons" for "games", whatever those
 //! words mean to me at the moment.
 
-#![feature(let_else)]
+#![feature(let_else, slice_group_by)]
 
 use std::{
     char,
@@ -28,7 +28,7 @@ use dungen::{
         cell_auto::{Algorithm as CaAlgorithm, CellularAutomata},
         room_gen::RoomBasedGen,
     },
-    util::{math::get_curve_between, random::init_rng},
+    util::{math::get_curve_between, random::init_rng}, pf::pathing::Pathfinding,
 };
 
 const FUNCTION: usize = 20usize;
@@ -68,6 +68,8 @@ fn main() {
         16 => msgpack_serial_test(),
         18 => run_grid_tests(),
         19 => multiple_serial_compare(),
+        20 => compare_algorithms_internal(),
+        21 => print_all_maze_strings(),
         _ => println!("No function associated with {}", FUNCTION),
     }
 }
@@ -83,6 +85,70 @@ fn init() -> Vec<String> {
     println!("Args: {:?}", args);
 
     args
+}
+
+fn print_all_maze_strings() {
+    for string in GridStrings::all() {
+        println!("{}", string.get_maze().expect("Unable to get maze!"));
+    }
+}
+
+fn compare_algorithms_internal() {
+    let mut results = Vec::new();
+
+    for string in GridStrings::all() {
+        println!("Processing {:?}", string);
+
+        let grid = string.get_maze().expect("Could not get maze from string");
+        let (start, goal) = string.get_start_end().expect("Unable to get start and goal.");
+
+        println!("Running dijkstra");
+        let (path, time) = timed_result(|| {
+            Pathfinding::dijkstra(&grid, start, goal).expect("Unable to find path!")
+        });
+
+        results.push((format!("{:?}", &string), "dijkstra", time, path));
+
+        println!("Running astar");
+        let (path, time) = timed_result(|| {
+            Pathfinding::a_star(&grid, start, goal).expect("Unable to find path!")
+        });
+
+        results.push((format!("{:?}", &string), "astar", time, path));
+
+        println!("Running bfs");
+        let (path, time) = timed_result(|| {
+            Pathfinding::bfs(&grid, start, goal).expect("Unable to find path!")
+        });
+
+        results.push((format!("{:?}", &string), "bfs", time, path));
+
+        println!("Running fringe");
+        let (path, time) = timed_result(|| {
+            Pathfinding::fringe(&grid, start, goal).expect("Unable to find path!")
+        });
+
+        results.push((format!("{:?}", &string), "fringe", time, path));
+    }
+
+    for group in results.group_by(|a, b| a.0 == b.0) {
+        let mut first = false;
+
+        let mut fastest = ("", &Duration::MAX);
+
+        for (name, alg, dur, _) in group {
+            if !first {
+                println!("{}", name);
+                first = true;
+            }
+            if dur < fastest.1 {
+                fastest = (alg, dur);
+            }
+            println!("\t{:<10} {:>10}", alg, format!("{:?}", dur));
+        }
+
+        println!("\nFastest: {:?} ({:?})\n", fastest.0, fastest.1);
+    }
 }
 
 fn multiple_serial_compare() {
@@ -756,69 +822,6 @@ fn compare_algorithms(
             print_grid_side_by_side("grid", grid, "yen", &path_grid);
         }
     }
-
-    // NOTE: DFS runs incredibly slow, taking upwards of 30-45 seconds.
-    // println!("Calling DFS for {:?} to {:?}.", start, goal);
-    // let (r2, dur) = timed_result(|| {
-    //     pflib::dfs(
-    //         start,
-    //         |&p| grid.neighbors_with_state(p, false, false),
-    //         |&p| p == goal,
-    //     )
-    // });
-    // if let Some(path) = r2 {
-    //     println!("Path found by DFS in {:?}", dur);
-    //     times.push((dur, "dfs".to_string()));
-    //     println!("Creating MapGrid showing path...");
-    //     let mut path_grid = map_path_to_grid(grid_size, &path);
-    //     print_grid_side_by_side("grid", grid, "DFS", &path_grid);
-    // } else {
-    //     println!("No path found by DFS.");
-    // }
-
-    // NOTE: IDA-Star is very slow, took at least 30-45 SECONDS to run.
-    // println!("Calling idastar for {:?} to {:?}.", start, goal);
-    // let (results, dur): TimedDijkstra = timed_result(|| {
-    //     pflib::idastar(
-    //         &start.into(),
-    //         |p| {
-    //             grid.neighbors_with_state(*p, false, false)
-    //                 .into_iter()
-    //                 .map(|pi| (pi, 1usize))
-    //                 .collect::<Vec<((usize, usize), usize)>>()
-    //         },
-    //         |&(x, y)| pflib::absdiff(x, goal.0) + pflib::absdiff(y, goal.1),
-    //         |&p| p == goal,
-    //     )
-    // });
-    // if let Some((path, cost)) = results {
-    //     println!("Path found by IDAStar in {:?}", dur);
-    //     times.push((dur, "idastar".to_string()));
-    //     println!("Creating MapGrid showing path...");
-    //     let mut path_grid = map_path_to_grid(grid_size, &path);
-    //     print_grid_side_by_side("grid", grid, "IDAStar", &path_grid);
-    // } else {
-    //     println!("No path found by IDAStar.");
-    // }
-
-    // NOTE: IDDFS is very slow, took at least 30-45 SECONDS to run.
-    // println!("Calling IDDFS for {:?} to {:?}.", start, goal);
-    // let (r2, dur) = timed_result(|| {
-    //     pflib::iddfs(
-    //         start,
-    //         |&p| grid.neighbors_with_state(p, false, false),
-    //         |&p| p == goal,
-    //     )
-    // });
-    // if let Some(path) = r2 {
-    //     println!("Path found by IDDFS in {:?}", dur);
-    //     times.push((dur, "iddfs".to_string()));
-    //     println!("Creating MapGrid showing path...");
-    //     let mut path_grid = map_path_to_grid(grid_size, &path);
-    //     print_grid_side_by_side("grid", grid, "IDDFS", &path_grid);
-    // } else {
-    //     println!("No path found by IDDFS.");
-    // }
 
     times
 }
