@@ -298,6 +298,7 @@ impl From<usize> for GridClassification {
 /// Static struct holding room based generation methods.
 pub struct RoomBased;
 
+/// Impl block for public functions.
 impl RoomBased {
     /// "Basic" Room Based Generator
     #[must_use] 
@@ -601,72 +602,6 @@ impl RoomBased {
         grid
     }
 
-    fn connect_all_rooms(grid: &mut MapGrid, rooms: &mut [Room]) {
-        fastrand::shuffle(rooms);
-        let room_count = rooms.len();
-        for room in rooms.windows(2) {
-            let mut connections = 0;
-            let (r1, r2) = (room[0], room[1]);
-            if fastrand::u8(0..5) > 1 {
-                connections += 1;
-                Self::connect_rooms(grid, &r1, &r2);
-            }
-
-            for sub in room {
-                let mut sub_conn = connections;
-                for _i in 0..=(fastrand::u8(0..3)) {
-                    sub_conn += 1;
-                    let random_room = &rooms[fastrand::usize(0..room_count)];
-                    Self::connect_rooms(grid, sub, random_room);
-                }
-                if sub_conn < 1 {
-                    let random_room = &rooms[fastrand::usize(0..room_count)];
-                    Self::connect_rooms(grid, sub, random_room);
-                }
-            }
-        }
-    }
-
-    fn connect_rooms(grid: &mut MapGrid, first: &Room, second: &Room) {
-        let c1 = first.square().center();
-        let c2 = second.square().center();
-
-        if fastrand::u8(0..3) == 2 {
-            // 33% chance of connecting with curve
-            Self::curved_path(grid, c1, c2);
-        } else if fastrand::bool() {
-            // Otherwise 50-50 shot of connecting from upper left vs lower right mid point
-            Self::horizontal_path(grid, c1.x, c2.x, c1.y);
-            Self::vertical_path(grid, c1.y, c2.y, c2.x);
-        } else {
-            Self::vertical_path(grid, c1.y, c2.y, c2.x);
-            Self::horizontal_path(grid, c1.x, c2.x, c1.y);
-        }
-    }
-
-    fn horizontal_path(grid: &mut MapGrid, first: usize, second: usize, y: usize) {
-        let start = first.min(second);
-        let end = first.max(second);
-        for col in start..=end {
-            grid.set_cell_state(col, y, true);
-        }
-    }
-
-    fn vertical_path(grid: &mut MapGrid, first: usize, second: usize, x: usize) {
-        let start = first.min(second);
-        let end = first.max(second);
-        for row in start..=end {
-            grid.set_cell_state(x, row, true);
-        }
-    }
-
-    fn curved_path(grid: &mut MapGrid, first: GridPos, second: GridPos) {
-        let path = get_curve_between(first, second);
-        for pos in path {
-            grid.set_cell_state(pos.0, pos.1, true);
-        }
-    }
-
     /// "Tiered" "Heuristic" Room Based Generator
     /// 
     /// ### Panics
@@ -953,6 +888,75 @@ impl RoomBased {
         Self::connect_all_rooms(&mut grid, &mut rooms);
 
         grid
+    }
+}
+
+/// Impl block for private functions.
+impl RoomBased {
+    fn connect_all_rooms(grid: &mut MapGrid, rooms: &mut [Room]) {
+        fastrand::shuffle(rooms);
+        let room_count = rooms.len();
+        for room in rooms.windows(2) {
+            let mut connections = 0;
+            let (r1, r2) = (room[0], room[1]);
+            if fastrand::u8(0..5) > 1 {
+                connections += 1;
+                Self::connect_rooms(grid, &r1, &r2);
+            }
+
+            for sub in room {
+                let mut sub_conn = connections;
+                for _i in 0..=(fastrand::u8(0..3)) {
+                    sub_conn += 1;
+                    let random_room = &rooms[fastrand::usize(0..room_count)];
+                    Self::connect_rooms(grid, sub, random_room);
+                }
+                if sub_conn < 1 {
+                    let random_room = &rooms[fastrand::usize(0..room_count)];
+                    Self::connect_rooms(grid, sub, random_room);
+                }
+            }
+        }
+    }
+
+    fn connect_rooms(grid: &mut MapGrid, first: &Room, second: &Room) {
+        let c1 = first.square().center();
+        let c2 = second.square().center();
+
+        if fastrand::u8(0..3) == 2 {
+            // 33% chance of connecting with curve
+            Self::curved_path(grid, c1, c2);
+        } else if fastrand::bool() {
+            // Otherwise 50-50 shot of connecting from upper left vs lower right mid point
+            Self::horizontal_path(grid, c1.x, c2.x, c1.y);
+            Self::vertical_path(grid, c1.y, c2.y, c2.x);
+        } else {
+            Self::vertical_path(grid, c1.y, c2.y, c2.x);
+            Self::horizontal_path(grid, c1.x, c2.x, c1.y);
+        }
+    }
+
+    fn horizontal_path(grid: &mut MapGrid, first: usize, second: usize, y: usize) {
+        let start = first.min(second);
+        let end = first.max(second);
+        for col in start..=end {
+            grid.set_cell_state(col, y, true);
+        }
+    }
+
+    fn vertical_path(grid: &mut MapGrid, first: usize, second: usize, x: usize) {
+        let start = first.min(second);
+        let end = first.max(second);
+        for row in start..=end {
+            grid.set_cell_state(x, row, true);
+        }
+    }
+
+    fn curved_path(grid: &mut MapGrid, first: GridPos, second: GridPos) {
+        let path = get_curve_between(first, second);
+        for pos in path {
+            grid.set_cell_state(pos.0, pos.1, true);
+        }
     }
 
     fn classify_grid(size: GridSize) -> ClassificationResult {
