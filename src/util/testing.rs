@@ -1,37 +1,10 @@
-/// Example Use:
-/// ```
-/// #[test]
-/// fn test_something_interesting() {
-///     run_tests(|| {
-///         let true_or_false = do_the_test();
-///
-///         assert!(true_or_false);
-///     })
-/// }
-/// ```
-///
-pub fn run_tests(setup: fn(), teardown: fn(), tests: Vec<fn()>) {
-    setup();
-
-    let mut results = Vec::new();
-
-    for t in tests {
-        let result = std::panic::catch_unwind(t);
-        results.push(result);
-    }
-
-    teardown();
-
-    for result in results {
-        assert!(result.is_ok());
-    }
-}
-
-/// This function should be called in each test (at least any test that requires logging)
-/// or the [`fastrand`] crate. It initializes the [`env_logger`] (with test settings) and
-/// seeds the [`fastrand`] RNG with the number 0.
-pub fn before_test() {
-    let _ = env_logger::builder().is_test(true).try_init();
+/// This function should be called in each test (at least any test that requires logging or
+/// would like deterministic results from RNG). It initializes the [`env_logger`] (with test
+/// settings) and seeds the [`fastrand`] RNG with the number 0.
+crate fn crate_before_test() {
+    if let Err(e) = env_logger::builder().is_test(true).try_init() {
+        eprintln!("Failed to initialize env_logger: {}", e);
+    };
     crate::util::random::init_rng_seeded(0);
 }
 
@@ -61,6 +34,7 @@ macro_rules! assert_unordered_match {
     };
 }
 
+#[allow(unused_imports)]
 #[cfg(test)]
 mod tests {
     use super::*;

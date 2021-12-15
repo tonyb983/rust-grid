@@ -1,9 +1,9 @@
-use std::ops::{Range, RangeBounds};
+use std::ops::Range;
 
-use euclid::{Box2D, Point2D};
-use log::trace;
-
-use crate::data::{cell::TriCell, square, GridSquare, MapGrid};
+use crate::{
+    data::{square, Cell, GridSquare, MapGrid},
+    logging::trace,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum RoomSize {
@@ -21,6 +21,7 @@ static SIZES: [RoomSize; 4] = [
 ];
 
 impl RoomSize {
+    /// Get an iterator over all room sizes.
     pub fn all_sizes() -> impl Iterator<Item = RoomSize> {
         SIZES.into_iter()
     }

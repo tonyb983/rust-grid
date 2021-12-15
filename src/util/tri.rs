@@ -1,54 +1,26 @@
-//! # `tri-state`: fearless booleans
-//!
-//! Gone are the days where a simple true/false boolean variable suffices. Modern software requires
-//! modern solutions: `TriState`.
-//!
-//! ***Definitely*** Trusted by Microsoft.
-//!
-//! ## Old, slow, ancient, unsafe code
-//! ```
-//! let foo = true;
-//! if foo {
-//!     println!("Hello, world!");
-//! }
-//!
-//! // Hard to read, intent unclear
-//! let bar = 1 == 2;
-//! match bar {
-//!     false => println!("One does not equal two"),
-//!     true => println!("One equals two"),
-//!     // Restrictive, not web-scale
-//! }
-//! ```
-//!
-//! ## New, fast, web-scale, safe code
-//! ```
-//! // Clean and easy to read
-//! let foo = TriState::True;
-//! if foo.into() {
-//!     println!("Hello, world!");
-//! }
-//!
-//! // Simple, effortless conversion
-//! let bar: TriState = (1 == 2).into();
-//! match bar {
-//!     TriState::False => println!("One does not equal two"),
-//!     TriState::True => println!("One equals two"),
-//!     // Highly future-proof and scalable
-//!     _ => panic!(),
-//! }
-//!
-//! // Compatible with all major brands
-//! let has_a_3 = TriState::from(vec![1, 2, 4, 5].contains(&3));
-//! println!("Has a 3: {}", has_a_3); // prints "Has a 3: False"
-//! ```
-#![deny(missing_docs)]
-
-use std::fmt;
-
 use serde::{Deserialize, Serialize};
 
-/// Specifies a tri-state Boolean value.
+/// Specifies a 3 state Boolean value.
+/// 
+/// ### Variants
+/// - `True` - The `on` or `true` state.
+/// - `False` - The `off` or `false` state.
+/// - `Invalid` - The `invalid` state.
+/// 
+/// ### Traits
+/// The following traits are implemented for [`TriState`]:
+/// - [`From`]
+///     - [`bool`], [`Option<bool>`], [`Result<bool, _>`], [`usize`], [`isize`], [`u64`], [`i64`], [`u32`], [`i32`], [`u16`], [`i16`], [`u8`], [`i8`]
+///     - Numerical conversions are done using 0 for `False` and 1 for `True`, and any other value as `Invalid`
+/// - [`Into`]
+///     - [`bool`], [`Option<bool>`]
+/// - [`Default`] (Default value is [`TriState::False`])
+/// - [`std::fmt::Display`]
+/// - [`std::ops::Not`], [`std::ops::BitAnd`], [`std::ops::BitOr`], [`std::ops::BitXor`]
+///     - Bitwise operations are the same as a boolean value would be, except that `Invalid` is given higher priority than `True` (Anything AND `Invalid` is `Invalid`, anything XOR `Invalid` is `Invalid`, etc.).
+/// - [`serde::Deserialize`] and [`serde::Serialize`]
+/// - Auto-Traits:
+///    - [`Debug`], [`PartialEq`], [`Eq`], [`Clone`], [`Copy`], [`Hash`], [`PartialOrd`], [`Ord`]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 #[derive(Deserialize, Serialize)]
 pub enum TriState {
@@ -61,23 +33,88 @@ pub enum TriState {
 }
 
 impl TriState {
+    /// Create a [`TriState::True`].
+    #[must_use] 
+    pub fn on() -> Self {
+        TriState::True
+    }
+
+    /// Create a [`TriState::False`].
+    #[must_use] 
+    pub fn off() -> Self {
+        TriState::False
+    }
+
+    /// Create a [`TriState::Invalid`].
+    #[must_use] 
+    pub fn invalid() -> Self {
+        TriState::Invalid
+    }
+
     /// Returns the opposite of the current *boolean* value. [`TriState::Invalid`] remains unchanged.
-    pub fn not(self) -> TriState {
+    #[must_use] 
+    pub fn toggle(self) -> Self {
         match self {
-            TriState::True => TriState::False,
-            TriState::False => TriState::True,
-            TriState::Invalid => TriState::Invalid,
+            Self::True => Self::False,
+            Self::False => Self::True,
+            Self::Invalid => Self::Invalid,
         }
     }
 
     /// Returns true if this [`TriState`] is [`TriState::True`] or [`TriState::False`].
+    #[must_use] 
     pub fn is_valid(self) -> bool {
         self != TriState::Invalid
     }
 
     /// Safely creates a bool from a [`TriState`] without panicking, converting `Invalid` to `false`.
+    #[must_use] 
     pub fn safe_bool(self) -> bool {
         self == TriState::True
+    }
+}
+
+impl std::ops::Not for TriState {
+    type Output = Self;
+
+    fn not(self) -> Self {
+        self.toggle()
+    }
+}
+
+impl std::ops::BitAnd for TriState {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (Self::Invalid, _) | (_, Self::Invalid) => Self::Invalid,
+            (Self::False, _) | (_, Self::False) => Self::False,
+            (Self::True, Self::True) => Self::True,
+        }
+    }
+}
+
+impl std::ops::BitOr for TriState {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (Self::Invalid, _) | (_, Self::Invalid) => Self::Invalid,
+            (Self::True, _) | (_, Self::True) => Self::True,
+            (Self::False, Self::False) => Self::False,
+        }
+    }
+}
+
+impl std::ops::BitXor for TriState {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (Self::Invalid, _) | (_, Self::Invalid) => Self::Invalid,
+            (Self::True, Self::False) | (Self::False, Self::True) => Self::True,
+            (Self::True, Self::True) | (Self::False, Self::False) => Self::False,
+        }
     }
 }
 
@@ -106,6 +143,17 @@ impl From<Option<bool>> for TriState {
             Some(true) => TriState::True,
             Some(false) => TriState::False,
             None => TriState::Invalid,
+        }
+    }
+}
+
+impl<ErrorType> From<Result<bool, ErrorType>> for TriState {
+    /// Converts a result of bool to a [`TriState`], using [`TriState::Invalid`] if the value is `Err`.
+    fn from(b: Result<bool, ErrorType>) -> Self {
+        match b {
+            Ok(true) => TriState::True,
+            Ok(false) => TriState::False,
+            Err(_) => TriState::Invalid,
         }
     }
 }
@@ -246,9 +294,9 @@ impl From<u8> for TriState {
     }
 }
 
-impl fmt::Display for TriState {
+impl std::fmt::Display for TriState {
     /// Displays a [`TriState`] as either "True", "False", or "Invalid".
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
@@ -299,6 +347,106 @@ mod tests {
         let has_a_3 = TriState::from(vec![1, 2, 4, 5].contains(&3));
         assert_eq!(format!("Has a 3: {}", has_a_3), "Has a 3: False");
         assert_eq!(Option::<bool>::from(TriState::False), Some(false));
+    }
+
+    #[test]
+    fn bit_and() {
+        use std::ops::BitAnd;
+
+        assert_eq!(TriState::True.bitand(TriState::True), TriState::True);
+        assert_eq!(TriState::True.bitand(TriState::False), TriState::False);
+        assert_eq!(TriState::True.bitand(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::False.bitand(TriState::True), TriState::False);
+        assert_eq!(TriState::False.bitand(TriState::False), TriState::False);
+        assert_eq!(TriState::False.bitand(TriState::Invalid), TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid.bitand(TriState::True), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitand(TriState::False), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitand(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::True & TriState::True, TriState::True);
+        assert_eq!(TriState::True & TriState::False, TriState::False);
+        assert_eq!(TriState::True & TriState::Invalid, TriState::Invalid);
+
+        assert_eq!(TriState::False & TriState::True, TriState::False);
+        assert_eq!(TriState::False & TriState::False, TriState::False);
+        assert_eq!(TriState::False & TriState::Invalid, TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid & TriState::True, TriState::Invalid);
+        assert_eq!(TriState::Invalid & TriState::False, TriState::Invalid);
+        assert_eq!(TriState::Invalid & TriState::Invalid, TriState::Invalid);
+    }
+
+    #[test]
+    fn bit_or() {
+        use std::ops::BitOr;
+
+        assert_eq!(TriState::True.bitor(TriState::True), TriState::True);
+        assert_eq!(TriState::True.bitor(TriState::False), TriState::True);
+        assert_eq!(TriState::True.bitor(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::False.bitor(TriState::True), TriState::True);
+        assert_eq!(TriState::False.bitor(TriState::False), TriState::False);
+        assert_eq!(TriState::False.bitor(TriState::Invalid), TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid.bitor(TriState::True), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitor(TriState::False), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitor(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::True | TriState::True, TriState::True);
+        assert_eq!(TriState::True | TriState::False, TriState::True);
+        assert_eq!(TriState::True | TriState::Invalid, TriState::Invalid);
+
+        assert_eq!(TriState::False | TriState::True, TriState::True);
+        assert_eq!(TriState::False | TriState::False, TriState::False);
+        assert_eq!(TriState::False | TriState::Invalid, TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid | TriState::True, TriState::Invalid);
+        assert_eq!(TriState::Invalid | TriState::False, TriState::Invalid);
+        assert_eq!(TriState::Invalid | TriState::Invalid, TriState::Invalid);
+    }
+
+    #[test]
+    fn bit_xor() {
+        use std::ops::BitXor;
+
+        assert_eq!(TriState::True.bitxor(TriState::True), TriState::False);
+        assert_eq!(TriState::True.bitxor(TriState::False), TriState::True);
+        assert_eq!(TriState::True.bitxor(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::False.bitxor(TriState::True), TriState::True);
+        assert_eq!(TriState::False.bitxor(TriState::False), TriState::False);
+        assert_eq!(TriState::False.bitxor(TriState::Invalid), TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid.bitxor(TriState::True), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitxor(TriState::False), TriState::Invalid);
+        assert_eq!(TriState::Invalid.bitxor(TriState::Invalid), TriState::Invalid);
+
+        assert_eq!(TriState::True ^ TriState::True, TriState::False);
+        assert_eq!(TriState::True ^ TriState::False, TriState::True);
+        assert_eq!(TriState::True ^ TriState::Invalid, TriState::Invalid);
+
+        assert_eq!(TriState::False ^ TriState::True, TriState::True);
+        assert_eq!(TriState::False ^ TriState::False, TriState::False);
+        assert_eq!(TriState::False ^ TriState::Invalid, TriState::Invalid);
+        
+        assert_eq!(TriState::Invalid ^ TriState::True, TriState::Invalid);
+        assert_eq!(TriState::Invalid ^ TriState::False, TriState::Invalid);
+        assert_eq!(TriState::Invalid ^ TriState::Invalid, TriState::Invalid);
+    }
+
+    #[test]
+    fn not_impl() {
+        use std::ops::Not;
+
+        assert_eq!(TriState::True.not(), TriState::False);
+        assert_eq!(TriState::False.not(), TriState::True);
+        assert_eq!(TriState::Invalid.not(), TriState::Invalid);
+
+        assert_eq!(!TriState::True, TriState::False);
+        assert_eq!(!TriState::False, TriState::True);
+        assert_eq!(!TriState::Invalid, TriState::Invalid);
     }
 
     #[test]

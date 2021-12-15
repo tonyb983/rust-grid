@@ -1,6 +1,7 @@
-use log::{debug, error, info, trace, warn};
-
-use crate::data::grid::MapGrid;
+use crate::{
+    data::MapGrid,
+    logging::{trace, warn},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FirstAlgArgs {
@@ -46,9 +47,12 @@ impl Algorithm {
     }
 }
 
+/// Static struct holding cellular automata algorithms.
 pub struct CellularAutomata;
 
 impl CellularAutomata {
+    /// Executes the indicated algorithm on the provided map for the given number of passes.
+    #[must_use] 
     pub fn execute_on(original: &MapGrid, passes: usize, alg_args: Algorithm) -> MapGrid {
         trace!(
             "CellularAutomata::execute_on(Grid,{}, {:?})",
@@ -67,6 +71,7 @@ impl CellularAutomata {
 
     /// Executes the first cellular automata method, returning the final product
     /// as well as a list of intermediate products.
+    #[must_use] 
     pub fn execute_with_history(
         original: &MapGrid,
         passes: usize,
@@ -88,6 +93,7 @@ impl CellularAutomata {
     /// automata method on it [`passes`] times.
     ///
     /// ### Return value is (<OriginalGrid>, <FinalGrid>).
+    #[must_use] 
     pub fn create_and_run(
         size: (usize, usize),
         passes: usize,
@@ -120,7 +126,7 @@ impl CellularAutomata {
         on_minimum: usize,
         off_minimum: usize,
     ) -> (MapGrid, Vec<MapGrid>) {
-        Self::flexible(grid, passes, false, |xy, n, s| {
+        Self::flexible(grid, passes, track_changes, |_, n, s| {
             if s {
                 n >= on_minimum
             } else {

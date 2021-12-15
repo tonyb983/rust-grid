@@ -1,64 +1,26 @@
-#![feature(
-    associated_type_defaults,
-    inline_const,
-    concat_idents,
-    crate_visibility_modifier,
-    default_free_fn,
-    exclusive_range_pattern,
-    half_open_range_patterns,
-    let_else,
-    once_cell,
-    test,
-    try_blocks
-)]
-#![warn(clippy::pedantic)]
-#![warn(rustdoc::all)]
-#![warn(rust_2018_idioms)]
-#![warn(
-    rust_2021_compatibility,
-    rust_2021_incompatible_closure_captures,
-    rust_2021_incompatible_or_patterns,
-    rust_2021_prefixes_incompatible_syntax,
-    rust_2021_prelude_collisions
-)]
-#![warn(clippy::all)]
-// Justifications:
-// - `clippy::module_name_repititions` - This is maybe something I can be better about but for now it's okay in my book.
-// - `clippy::semicolon_if_nothing_returned` - This interferes with the `let_else` feature syntax.
-// - `clippy::similar_names` - This interferes with functions that use a lot of intermediate variables (usually for debugging).
-// - `unused` - Eventually.
-#![allow(
-    clippy::module_name_repetitions,
-    clippy::semicolon_if_nothing_returned,
-    clippy::similar_names,
-    unused
-)]
+//! # Dungen
+//! 
+//! My experimentation with all things procedurally generated, pathfinding, 2D grid / matrix operations, etc.
+//! 
+//! Eventual goal is to have a library that creates "dungeons" for "games", whatever those
+//! words mean to me at the moment.
 
-mod data;
-mod draw;
-mod gen;
-mod pf;
-mod pipe;
-mod util;
+#![feature(let_else)]
 
 use std::{
     char,
-    io::{Read, Write},
-    iter::Map,
-    ops::{Div, Sub},
+    env,
+    ops::Sub,
     time::{Duration, Instant},
 };
 
-use log::error;
 use pad::PadStr;
 use pathfinding::prelude as pflib;
-use stroke::Point;
-use utils_macro::{p, s};
 
-use crate::{
+use dungen::{
     data::{
         grid::MapGrid,
-        grids::{GridFiles, GridStrings, PremadeGrids},
+        premade::{GridFiles, GridStrings, PremadeGrids},
         size, GridPos,
     },
     draw::artist::Artist,
@@ -66,54 +28,70 @@ use crate::{
         cell_auto::{Algorithm as CaAlgorithm, CellularAutomata},
         room_gen::RoomBasedGen,
     },
-    util::geo::get_curve_between,
+    util::{math::get_curve_between, random::init_rng},
 };
 
-fn main() {
-    init();
+const FUNCTION: usize = 20usize;
 
-    multiple_serial_compare();
-    // serial_time_comparison();
-    // json_serial_test();
-    // msgpack_serial_test();
-    // curves();
-    // curve_and_cell_auto_test();
-    // generate_various_sizes();
-    // tiered_room_generator();
-    // basic_room_generator();
-    // compare_maps_and_algs(false);
-    // file_loading();
-    // pathfinding_comparison();
-    // pf_grid();
-    // check_ca_firsts();
-    // run_grid_tests();
-    // run_ca_first_param_comparison();
-    // run_ca_first_initial_fill_comparison();
-    // tiny_skia_stroke();
-    // tiny_skia_first();
-    // simple_artist_run();
+fn main() {
+    let args = init();
+
+    let input = if args.is_empty() {
+        FUNCTION
+    } else {
+        match args[0].parse() {
+            Ok(n) => n,
+            Err(err) => {
+                println!("Error parsing input: {}", err);
+
+                FUNCTION
+            },
+        }
+    };
+
+    match input {
+        0 => simple_artist_run(),
+        2 => tiny_skia_first(),
+        3 => run_ca_first_initial_fill_comparison(),
+        4 => run_ca_first_param_comparison(),
+        5 => check_ca_firsts(),
+        6 => pf_grid(),
+        7 => pathfinding_comparison(),
+        8 => file_loading(),
+        9 => compare_maps_and_algs(false),
+        10 => basic_room_generator(),
+        11 => tiered_room_generator(),
+        12 => generate_various_sizes(),
+        13 => curve_and_cell_auto_test(),
+        14 => curves(),
+        15 => json_serial_test(),
+        16 => msgpack_serial_test(),
+        18 => run_grid_tests(),
+        19 => multiple_serial_compare(),
+        _ => println!("No function associated with {}", FUNCTION),
+    }
 }
 
-fn init() {
+fn init() -> Vec<String> {
     println!("Main Starting");
     println!("Initializing logger (env_logger)");
     env_logger::init();
     println!("Initializing rng (fastrand)");
-    util::random::init_rng();
+    init_rng();
+    println!("Getting input args.");
+    let args: Vec<String> = env::args().skip(1).collect();
+    println!("Args: {:?}", args);
+
+    args
 }
 
 fn multiple_serial_compare() {
     let m1 = PremadeGrids::maze1();
     let m2 = PremadeGrids::maze2();
-    let r2 = serial_time_comparison(&m2, false);
     let m3 = PremadeGrids::maze3();
-    let r3 = serial_time_comparison(&m3, false);
     let m4 = PremadeGrids::maze4();
-    let r4 = serial_time_comparison(&m4, false);
     let m5 = PremadeGrids::maze5();
-    let r5 = serial_time_comparison(&m5, false);
     let m6 = PremadeGrids::maze6();
-    let r6 = serial_time_comparison(&m6, false);
 
     let mut results = Vec::with_capacity(6);
     let maps = vec![m1, m2, m3, m4, m5, m6];
@@ -199,9 +177,9 @@ fn serial_time_comparison(
     let js = original
         .to_json_string(false)
         .expect("MapGrid::to_json_string(false) failed");
-    let jsp = original
-        .to_json_string(true)
-        .expect("MapGrid::to_json_string(true) failed");
+    // let jsp = original
+    //     .to_json_string(true)
+    //     .expect("MapGrid::to_json_string(true) failed");
     let mb = original.to_msgpack().expect("MapGrid::to_msgpack failed");
 
     // let mut j_file = tempfile::tempfile().expect("tempfile::tempfile failed");
@@ -259,7 +237,6 @@ fn serial_time_comparison(
         .name_copy()
         .unwrap_or_else(|| "MapGrid".to_string());
     let (x, y) = original.size().into();
-    let title = format!("{:?} - {}x{} ({} cells)", name, x, y, x * y);
 
     (
         format!("{:?} - {}x{} ({} cells)", name, x, y, x * y),
@@ -351,7 +328,7 @@ fn json_serial_test() {
 }
 
 fn curve_and_cell_auto_test() {
-    let mut map = MapGrid::reverse(&RoomBasedGen::tiered_heuristic(size(
+    let map = MapGrid::reverse(&RoomBasedGen::tiered_heuristic(size(
         fastrand::usize(75..=160),
         fastrand::usize(20..=37),
     )));
@@ -362,7 +339,7 @@ fn curve_and_cell_auto_test() {
     let alt = CellularAutomata::execute_on(
         &map,
         1,
-        CaAlgorithm::flex(|xy, n, s| {
+        CaAlgorithm::flex(|_, n, s| {
             let t = n + if s { 1 } else { 0 };
             t >= 4 && t != 6
         }),
@@ -443,20 +420,20 @@ fn generate_various_sizes() {
 }
 
 fn basic_room_generator() {
-    let mut grid = RoomBasedGen::basic((60, 30).into());
+    let grid = RoomBasedGen::basic((60, 30).into());
     println!("Created grid:\n{}", grid);
 }
 
 fn tiered_room_generator() {
     let x = fastrand::usize(50..=100);
     let y = fastrand::usize(40..=70);
-    let mut grid = RoomBasedGen::tiered((x, y).into());
+    let grid = RoomBasedGen::tiered((x, y).into());
     println!("Created {:?} Grid:\n{}", (x, y), grid);
 }
 
 fn compare_maps_and_algs(print: bool) {
-    let mut res1 = compare_map_strings(print);
-    let mut res2 = compare_map_files(print);
+    let res1 = compare_map_strings(print);
+    let res2 = compare_map_files(print);
 
     for (map_name, results) in res1.iter().chain(res2.iter()) {
         println!("{}", map_name);
@@ -646,14 +623,14 @@ fn compare_algorithms(
         )
     });
 
-    if let Some((path, cost)) = results {
+    if let Some((path, _)) = results {
         if print {
             println!("Path found by dijkstra in {:?}", dur);
         }
         times.push((dur, "dijkstra".to_string()));
         if print {
             println!("Creating MapGrid showing path...");
-            let mut path_grid = map_path_to_grid(grid_size.into(), &path);
+            let path_grid = map_path_to_grid(grid_size.into(), &path);
             print_grid_side_by_side("Maze", grid, "Dijkstra", &path_grid);
         }
     } else if print {
@@ -677,14 +654,14 @@ fn compare_algorithms(
         )
     });
 
-    if let Some((path, cost)) = results {
+    if let Some((path, _)) = results {
         if print {
             println!("Path found by astar in {:?}", dur);
         }
         times.push((dur, "astar".to_string()));
         if print {
             println!("Creating MapGrid showing path...");
-            let mut path_grid = map_path_to_grid(grid_size.into(), &path);
+            let path_grid = map_path_to_grid(grid_size.into(), &path);
             print_grid_side_by_side("grid", grid, "Astar", &path_grid);
         }
     } else if print {
@@ -709,7 +686,7 @@ fn compare_algorithms(
         times.push((dur, "bfs".to_string()));
         if print {
             println!("Creating MapGrid showing path...");
-            let mut path_grid = map_path_to_grid(grid_size.into(), &path);
+            let path_grid = map_path_to_grid(grid_size.into(), &path);
             print_grid_side_by_side("grid", grid, "BFS", &path_grid);
         }
     } else if print {
@@ -733,14 +710,14 @@ fn compare_algorithms(
         )
     });
 
-    if let Some((path, cost)) = results {
+    if let Some((path, _)) = results {
         if print {
             println!("Path found by fringe in {:?}", dur);
         }
         times.push((dur, "fringe".to_string()));
         if print {
             println!("Creating MapGrid showing path...");
-            let mut path_grid = map_path_to_grid(grid_size.into(), &path);
+            let path_grid = map_path_to_grid(grid_size.into(), &path);
             print_grid_side_by_side("grid", grid, "Fringe", &path_grid);
         }
     } else if print {
@@ -775,7 +752,7 @@ fn compare_algorithms(
         times.push((dur, "yen".to_string()));
         if print {
             println!("Creating MapGrid showing path...");
-            let mut path_grid = map_path_to_grid(grid_size.into(), &r3[0].0);
+            let path_grid = map_path_to_grid(grid_size.into(), &r3[0].0);
             print_grid_side_by_side("grid", grid, "yen", &path_grid);
         }
     }
@@ -867,7 +844,7 @@ fn pf_grid() {
             }
         }
 
-        pfg.distance((1, 1), (9, 9));
+        //pfg.distance((1, 1), (9, 9));
         println!("Modified PF Grid:\n{:?}", pfg);
 
         let mid = (pfg.width / 2, pfg.height / 2);
@@ -942,7 +919,7 @@ fn check_ca_firsts() {
         let second = CellularAutomata::execute_on(
             &original,
             5,
-            CaAlgorithm::flex(|xy, n, s| {
+            CaAlgorithm::flex(|_, n, s| {
                 let t = n + if s { 1 } else { 0 };
                 t >= 5
             }),
@@ -950,7 +927,7 @@ fn check_ca_firsts() {
         let third = CellularAutomata::execute_on(
             &original,
             5,
-            CaAlgorithm::flex(|xy, n, s| {
+            CaAlgorithm::flex(|_, n, s| {
                 let t = n + if s { 1 } else { 0 };
                 !(1..5).contains(&t)
             }),
@@ -959,7 +936,7 @@ fn check_ca_firsts() {
         let fourth = CellularAutomata::execute_on(
             &original,
             5,
-            CaAlgorithm::flex2(|xy, n, n2, s| {
+            CaAlgorithm::flex2(|_, n, n2, s| {
                 let t = n + if s { 1 } else { 0 };
                 t >= 5 || n2 < 1
             }),
@@ -968,7 +945,7 @@ fn check_ca_firsts() {
         let fifth1 = CellularAutomata::execute_on(
             &original,
             4,
-            CaAlgorithm::flex2(|xy, n, n2, s| {
+            CaAlgorithm::flex2(|_, n, n2, s| {
                 let t = n + if s { 1 } else { 0 };
                 t >= 5 || n2 < 1 || t < 1
             }),
@@ -977,7 +954,7 @@ fn check_ca_firsts() {
         let fifth = CellularAutomata::execute_on(
             &fifth1,
             3,
-            CaAlgorithm::flex(|xy, n, s| {
+            CaAlgorithm::flex(|_, n, s| {
                 let t = n + if s { 1 } else { 0 };
                 t >= 5
             }),
@@ -996,7 +973,7 @@ fn check_ca_firsts() {
 
 fn run_ca_first_param_comparison() {
     segment("CA First Alg - Default vs Alt 4/4", || {
-        let mut original = MapGrid::random_fill_percent((60, 30), 0.45);
+        let original = MapGrid::random_fill_percent((60, 30), 0.45);
         let (_, def_history) =
             CellularAutomata::execute_with_history(&original, 5, CaAlgorithm::default_first());
 
@@ -1018,53 +995,19 @@ fn run_ca_first_param_comparison() {
             print_double_div('-', 60);
         }
     });
-
-    return;
-
-    segment("CA First Alg - Default vs Default-Alt (4/4) Split", || {
-        let mut original = MapGrid::random_fill_percent((60, 30), 0.45);
-        let (_, def_history) =
-            CellularAutomata::execute_with_history(&original, 8, CaAlgorithm::default_first());
-
-        let (alt_last1, alt_history1) =
-            CellularAutomata::execute_with_history(&original, 1, CaAlgorithm::first(4, 4));
-
-        let (_, alt_history2) =
-            CellularAutomata::execute_with_history(&alt_last1, 7, CaAlgorithm::default_first());
-
-        let alt_history: Vec<MapGrid> = alt_history1
-            .into_iter()
-            .chain(alt_history2.into_iter())
-            .collect();
-
-        println!("Starting Grid");
-        print_grid(&original);
-
-        let def_history_len = def_history.len();
-        let alt_history_len = alt_history.len();
-        for (i, (def_step, alt_step)) in def_history.iter().zip(alt_history.iter()).enumerate() {
-            print_grid_side_by_side_with_fill(
-                format!("Default Step {}/{}", i + 1, def_history_len),
-                def_step,
-                format!("Default-Alt (4/4) Split {}/{}", i + 1, alt_history_len),
-                alt_step,
-            );
-            print_double_div('-', 60);
-        }
-    });
 }
 
 #[allow(clippy::cast_lossless)]
 fn run_ca_first_initial_fill_comparison() {
     segment("CA First Alg - Default 45% - 55%", || {
         for i in (0..10).step_by(2) {
-            let fill1 = ((45.0 + i as f64) / 100.0);
-            let fill2 = ((45.0 + 1.0 + i as f64) / 100.0);
-            let mut original1 = MapGrid::random_fill_percent((60, 30), fill1);
+            let fill1 = (45.0 + i as f64) / 100.0;
+            let fill2 = (45.0 + 1.0 + i as f64) / 100.0;
+            let original1 = MapGrid::random_fill_percent((60, 30), fill1);
             let def_final =
                 CellularAutomata::execute_on(&original1, 5, CaAlgorithm::default_first());
 
-            let mut original2 = MapGrid::random_fill_percent((60, 30), fill2);
+            let original2 = MapGrid::random_fill_percent((60, 30), fill2);
             let alt_final =
                 CellularAutomata::execute_on(&original2, 5, CaAlgorithm::default_first());
 
@@ -1079,6 +1022,7 @@ fn run_ca_first_initial_fill_comparison() {
     });
 }
 
+#[allow(dead_code)]
 fn print_div(sep: char, size: usize) {
     println!("|{div}|", div = sep.to_string().repeat(size));
 }
@@ -1180,7 +1124,7 @@ fn timed_result<R, F: FnMut() -> R>(mut f: F) -> (R, Duration) {
 }
 
 fn simple_artist_run() {
-    let mut grid = MapGrid::parse_string("###\n#.#\n###", '#', '.').expect("Failed to parse grid");
+    let grid = MapGrid::parse_string("###\n#.#\n###", '#', '.').expect("Failed to parse grid");
     println!("Created Grid:\n{}", grid);
     timed("Drawing first grid", || {
         if let Err(err) =
@@ -1190,7 +1134,7 @@ fn simple_artist_run() {
         }
     });
 
-    let mut grid = MapGrid::parse_string("#.#.#\n.#.#.\n#.#.#\n.#.#.\n#.#.#", '#', '.')
+    let grid = MapGrid::parse_string("#.#.#\n.#.#.\n#.#.#\n.#.#.\n#.#.#", '#', '.')
         .expect("Failed to parse grid");
     println!("Created Grid:\n{}", grid);
     timed("Drawing second grid", || {
@@ -1201,7 +1145,7 @@ fn simple_artist_run() {
         }
     });
 
-    let mut grid = MapGrid::random_fill_percent((60, 30), 0.5);
+    let grid = MapGrid::random_fill_percent((60, 30), 0.5);
     println!("Created Grid:\n{}", grid);
     timed("Drawing third grid", || {
         if let Err(err) =
@@ -1216,7 +1160,7 @@ fn tiny_skia_first() {
     let mut pixmap = tiny_skia::Pixmap::new(100, 100).expect("Could not create pixmap");
     let black = tiny_skia::Color::from_rgba8(255, 255, 255, 255);
     let white = tiny_skia::Color::from_rgba8(0, 0, 0, 255);
-    let mut white_paint = {
+    let white_paint = {
         let mut p = tiny_skia::Paint::default();
         p.set_color(white);
 
@@ -1255,7 +1199,7 @@ fn run_grid_tests() {
     });
 
     segment("Testing parsing...", || {
-        let mut grid = match MapGrid::parse_string(".#.\n.#.\n.#.", '#', '.') {
+        let grid = match MapGrid::parse_string(".#.\n.#.\n.#.", '#', '.') {
             Ok(g) => g,
             Err(errs) => {
                 println!("Errors parsing grid:");
@@ -1278,7 +1222,7 @@ fn run_grid_tests() {
     });
 
     segment("Testing bad parse...", || {
-        let mut grid = match MapGrid::parse_string(".#.\n.#..\n.#.@", '#', '.') {
+        let grid = match MapGrid::parse_string(".#.\n.#..\n.#.@", '#', '.') {
             Ok(g) => g,
             Err(errs) => {
                 println!("Errors parsing grid:");
@@ -1301,7 +1245,7 @@ fn run_grid_tests() {
     });
 
     segment("Testing grid too small", || {
-        let mut grid = match MapGrid::parse_string(".#\n#.", '#', '.') {
+        let grid = match MapGrid::parse_string(".#\n#.", '#', '.') {
             Ok(g) => g,
             Err(errs) => {
                 println!("Errors parsing grid:");
@@ -1324,7 +1268,7 @@ fn run_grid_tests() {
     });
 
     segment("Testing alternate chars", || {
-        let mut grid = match MapGrid::parse_string("0101\n1010\n0101\n1010", '1', '0') {
+        let grid = match MapGrid::parse_string("0101\n1010\n0101\n1010", '1', '0') {
             Ok(g) => g,
             Err(errs) => {
                 println!("Errors parsing grid:");
@@ -1346,7 +1290,7 @@ fn run_grid_tests() {
     });
 
     segment("Testing random grid", || {
-        let mut grid = MapGrid::random((8, 4));
+        let grid = MapGrid::random((8, 4));
         println!("Created Grid:\n{}", grid);
 
         for i in 0..grid.rows() {

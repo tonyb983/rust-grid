@@ -1,4 +1,3 @@
-use fastrand;
 use serde::{Deserialize, Serialize};
 
 use crate::util::tri::TriState;
@@ -10,16 +9,19 @@ pub struct BasicCell(bool);
 
 impl BasicCell {
     /// Creates a new [`BasicCell`] with the given value.
+    #[must_use] 
     pub fn new(value: bool) -> Self {
         Self(value)
     }
 
     /// Creates a [`BasicCell`] that is `on` or `true`.
+    #[must_use] 
     pub fn on() -> Self {
         Self(true)
     }
 
     /// Creates a [`BasicCell`] that is `off` or `false`.
+    #[must_use] 
     pub fn off() -> Self {
         Self(false)
     }
@@ -32,16 +34,19 @@ impl BasicCell {
     }
 
     /// Gets the state of this [`BasicCell`].
+    #[must_use] 
     pub fn state(self) -> bool {
         self.0
     }
 
     /// Returns `true` if this [`BasicCell`] is `off` or `false`.
+    #[must_use] 
     pub fn is_off(self) -> bool {
         !self.state()
     }
 
     /// Returns `true` if this [`BasicCell`] is `on` or `true`.
+    #[must_use] 
     pub fn is_on(self) -> bool {
         self.state()
     }
@@ -66,26 +71,31 @@ pub struct TriCell(TriState);
 
 impl TriCell {
     /// Creates a new [`TriCell`] with the given value.
+    #[must_use] 
     pub fn new(value: TriState) -> Self {
         Self(value)
     }
 
     /// Creates a [`TriCell`] that is `on` or `true`.
+    #[must_use] 
     pub fn on() -> Self {
         Self(true.into())
     }
 
     /// Creates a [`TriCell`] that is `off` or `false`.
+    #[must_use] 
     pub fn off() -> Self {
         Self(false.into())
     }
 
     /// Creates a [`TriCell`] that is `invalid`.
+    #[must_use] 
     pub fn invalid() -> Self {
         Self(TriState::Invalid)
     }
 
     /// Creates a [`TriCell`] with a random state.
+    #[must_use] 
     pub fn random() -> Self {
         Self(fastrand::bool().into())
     }
@@ -93,6 +103,7 @@ impl TriCell {
 
 impl TriCell {
     /// Get the current state of this [`TriCell`].
+    #[must_use] 
     pub fn state(self) -> TriState {
         self.0
     }
@@ -102,26 +113,31 @@ impl TriCell {
         self.0 = value;
     }
 
+    /// Set this cell to a random state.
     pub fn set_random(&mut self) {
         self.0 = fastrand::bool().into();
     }
 
     /// Returns true if this [`TriCell`] is `off` or `false`.
+    #[must_use] 
     pub fn is_off(self) -> bool {
         self.state() == TriState::False
     }
 
     /// Returns true if this [`TriCell`] is `on` or `true`.
+    #[must_use] 
     pub fn is_on(self) -> bool {
         self.state() == TriState::True
     }
 
     /// Returns `true` if this [`TriCell`] is `on` or `off`, but not `invalid`.
+    #[must_use] 
     pub fn is_valid(self) -> bool {
         self.state() != TriState::Invalid
     }
 
     /// Returns `true` if this [`TriCell`] is `invalid`.
+    #[must_use] 
     pub fn is_invalid(self) -> bool {
         !self.is_valid()
     }
@@ -130,7 +146,7 @@ impl TriCell {
     /// 
     /// *Invalid is kept as is.*
     pub fn toggle(&mut self) {
-        self.0 = self.0.not();
+        self.0 = self.0.toggle();
     }
 }
 
@@ -165,15 +181,22 @@ impl From<TriCell> for BasicCell {
     }
 }
 
+/// A tile enum representing a single tile in a grid of tiles. This will be the base for
+/// a more advanced [`crate::data::MapGrid`] type that can hold more than just `on` and `off`
+/// for each cell.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[derive(Deserialize, Serialize)]
 pub enum Tile {
+    /// A tile that is `invalid`.
     Invalid,
+    /// A tile that is a floor, or walkable.
     Floor,
+    /// A tile that is a wall, or not walkable.
     Wall
 }
 
 impl Tile {
+    #[allow(dead_code)]
     fn random() -> Self {
         if fastrand::bool() {
             Tile::Wall
@@ -216,26 +239,31 @@ impl TileCell {
         self.0 = value;
     }
 
+    #[allow(dead_code)]
     pub fn set_random(&mut self) {
         self.0 = Tile::random();
     }
 
     /// Returns true if this [`TriCell`] is `off` or `false`.
+    #[allow(dead_code)]
     pub fn is_off(self) -> bool {
         self.state() == Tile::Floor
     }
 
     /// Returns true if this [`TriCell`] is `on` or `true`.
+    #[allow(dead_code)]
     pub fn is_on(self) -> bool {
         self.state() == Tile::Wall
     }
 
     /// Returns `true` if this [`TriCell`] is `on` or `off`, but not `invalid`.
+    #[allow(dead_code)]
     pub fn is_valid(self) -> bool {
         self.state() != Tile::Invalid
     }
 
     /// Returns `true` if this [`TriCell`] is `invalid`.
+    #[allow(dead_code)]
     pub fn is_invalid(self) -> bool {
         !self.is_valid()
     }
@@ -248,12 +276,18 @@ impl TileCell {
     }
 }
 
+/// A trait representing a single cell, or block, in a grid.
 pub trait MapBlock {
+    /// The inner type representing the state of this cell, or block.
     type StateType = Tile;
 
+    /// Set the current state of this cell.
     fn set_state(&mut self, state: Self::StateType);
+    /// Get the current state of this cell.
     fn state(&self) -> Self::StateType;
+    /// Toggle the current state of this cell.
     fn toggle(&mut self);
+    /// Checks whether this cell matches the state given.
     fn is_state(&self, state: Self::StateType) -> bool;
 }
 

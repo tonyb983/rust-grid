@@ -9,7 +9,7 @@ use log::{error, info, trace, warn};
 use crate::{
     data::{GridPos, GridSize, MapGrid},
     gen::rooms::{Room, RoomSize},
-    util::geo::get_curve_between,
+    util::math::get_curve_between,
 };
 
 /// Classification categories for maps, determined by the number of rows, columns,
@@ -413,10 +413,10 @@ impl RoomBasedGen {
                 iters, total
             );
 
-            let mut x = fastrand::usize(big_room_x.clone());
-            let mut y = fastrand::usize(big_room_y.clone());
-            let mut w = fastrand::usize(big_room_width.clone());
-            let mut h = fastrand::usize(big_room_height.clone());
+            let x = fastrand::usize(big_room_x.clone());
+            let y = fastrand::usize(big_room_y.clone());
+            let w = fastrand::usize(big_room_width.clone());
+            let h = fastrand::usize(big_room_height.clone());
             info!(
                 "RoomGen::tiered - big room start = {:?} size = {:?}",
                 (&x, &y),
@@ -462,10 +462,10 @@ impl RoomBasedGen {
                 iters, total
             );
 
-            let mut x = fastrand::usize(mid_room_x.clone());
-            let mut y = fastrand::usize(mid_room_y.clone());
-            let mut w = fastrand::usize(mid_room_width.clone());
-            let mut h = fastrand::usize(mid_room_height.clone());
+            let x = fastrand::usize(mid_room_x.clone());
+            let y = fastrand::usize(mid_room_y.clone());
+            let w = fastrand::usize(mid_room_width.clone());
+            let h = fastrand::usize(mid_room_height.clone());
             info!(
                 "RoomGen::tiered - mid room start = {:?} size = {:?}",
                 (&x, &y),
@@ -512,10 +512,10 @@ impl RoomBasedGen {
                 iters, total
             );
 
-            let mut x = fastrand::usize(small_room_x.clone());
-            let mut y = fastrand::usize(small_room_y.clone());
-            let mut w = fastrand::usize(small_room_width.clone());
-            let mut h = fastrand::usize(small_room_height.clone());
+            let x = fastrand::usize(small_room_x.clone());
+            let y = fastrand::usize(small_room_y.clone());
+            let w = fastrand::usize(small_room_width.clone());
+            let h = fastrand::usize(small_room_height.clone());
             info!(
                 "RoomGen::tiered - small room start = {:?} size = {:?}",
                 (&x, &y),
@@ -573,7 +573,7 @@ impl RoomBasedGen {
 
             for sub in room {
                 let mut sub_conn = connections;
-                for i in 0..=(fastrand::u8(0..3)) {
+                for _i in 0..=(fastrand::u8(0..3)) {
                     sub_conn += 1;
                     let random_room = &rooms[fastrand::usize(0..room_count)];
                     Self::connect_rooms(grid, sub, random_room);
@@ -591,10 +591,10 @@ impl RoomBasedGen {
         let c2 = second.square().center();
 
         if fastrand::u8(0..3) == 2 {
-            /// 33% chance of connecting with curve
+            // 33% chance of connecting with curve
             Self::curved_path(grid, c1, c2);
         } else if fastrand::bool() {
-            /// Otherwise 50-50 shot of connecting from upper left vs lower right mid point
+            // Otherwise 50-50 shot of connecting from upper left vs lower right mid point
             Self::horizontal_path(grid, c1.x, c2.x, c1.y);
             Self::vertical_path(grid, c1.y, c2.y, c2.x);
         } else {
@@ -706,10 +706,10 @@ impl RoomBasedGen {
 
             let (size_x, size_y) = huge_room_size.clone();
             let (pos_x, pos_y) = huge_room_pos.clone();
-            let mut x = fastrand::usize(pos_x);
-            let mut y = fastrand::usize(pos_y);
-            let mut w = fastrand::usize(size_x);
-            let mut h = fastrand::usize(size_y);
+            let x = fastrand::usize(pos_x);
+            let y = fastrand::usize(pos_y);
+            let w = fastrand::usize(size_x);
+            let h = fastrand::usize(size_y);
             info!(
                 "RoomGen::tiered - huge room start = {:?} size = {:?}",
                 (&x, &y),
@@ -757,10 +757,10 @@ impl RoomBasedGen {
 
             let (size_x, size_y) = big_room_size.clone();
             let (pos_x, pos_y) = big_room_pos.clone();
-            let mut x = fastrand::usize(pos_x);
-            let mut y = fastrand::usize(pos_y);
-            let mut w = fastrand::usize(size_x);
-            let mut h = fastrand::usize(size_y);
+            let x = fastrand::usize(pos_x);
+            let y = fastrand::usize(pos_y);
+            let w = fastrand::usize(size_x);
+            let h = fastrand::usize(size_y);
             info!(
                 "RoomGen::tiered - big room start = {:?} size = {:?}",
                 (&x, &y),
@@ -808,10 +808,10 @@ impl RoomBasedGen {
 
             let (size_x, size_y) = mid_room_size.clone();
             let (pos_x, pos_y) = mid_room_pos.clone();
-            let mut x = fastrand::usize(pos_x);
-            let mut y = fastrand::usize(pos_y);
-            let mut w = fastrand::usize(size_x);
-            let mut h = fastrand::usize(size_y);
+            let x = fastrand::usize(pos_x);
+            let y = fastrand::usize(pos_y);
+            let w = fastrand::usize(size_x);
+            let h = fastrand::usize(size_y);
             info!(
                 "RoomGen::tiered - mid room start = {:?} size = {:?}",
                 (&x, &y),
@@ -861,10 +861,10 @@ impl RoomBasedGen {
 
             let (size_x, size_y) = small_room_size.clone();
             let (pos_x, pos_y) = small_room_pos.clone();
-            let mut x = fastrand::usize(pos_x);
-            let mut y = fastrand::usize(pos_y);
-            let mut w = fastrand::usize(size_x);
-            let mut h = fastrand::usize(size_y);
+            let x = fastrand::usize(pos_x);
+            let y = fastrand::usize(pos_y);
+            let w = fastrand::usize(size_x);
+            let h = fastrand::usize(size_y);
             info!(
                 "RoomGen::tiered - small room start = {:?} size = {:?}",
                 (&x, &y),

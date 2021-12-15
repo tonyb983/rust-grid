@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::data::grid::MapGrid;
+use crate::data::MapGrid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PipelineError {

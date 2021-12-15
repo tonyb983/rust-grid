@@ -1,110 +1,67 @@
-use integer_sqrt::IntegerSquareRoot;
-use num_traits::{PrimInt, Unsigned};
+/// ## `Math` Utility Module.
+/// Contains various math utility functions.
+/// 
+/// #### See [`bresenham_line`](`crate::util::math::bresenham_line`), [`get_curve_between`](`crate::util::math::get_curve_between`), etc.
+pub mod math;
 
-pub mod geo;
+/// ## `Random` Utility Module
+/// Contains functions for initializing and generating random numbers. Intent is to have this serve
+/// as an interface for whatever random library is being used. Currently this is `fastrand`. 
+/// 
+/// TODO:
+/// Still need to write individual functions for each random number generator, raw `fastrand` calls are
+/// currently still being used.
 pub mod random;
+
+/// # `tri-state`: fearless booleans
+///
+/// Gone are the days where a simple true/false boolean variable suffices. Modern software requires
+/// modern solutions: `TriState`.
+///
+/// ***Definitely*** Trusted by Microsoft.
+///
+/// ## Old, slow, ancient, unsafe code
+/// ```
+/// let foo = true;
+/// if foo {
+///     println!("Hello, world!");
+/// }
+///
+/// // Hard to read, intent unclear
+/// let bar = 1 == 2;
+/// match bar {
+///     false => println!("One does not equal two"),
+///     true => println!("One equals two"),
+///     // Restrictive, not web-scale
+/// }
+/// ```
+///
+/// ## New, fast, web-scale, safe code
+/// ```
+/// // Clean and easy to read
+/// let foo = TriState::True;
+/// if foo.into() {
+///     println!("Hello, world!");
+/// }
+///
+/// // Simple, effortless conversion
+/// let bar: TriState = (1 == 2).into();
+/// match bar {
+///     TriState::False => println!("One does not equal two"),
+///     TriState::True => println!("One equals two"),
+///     // Highly future-proof and scalable
+///     _ => panic!(),
+/// }
+///
+/// // Compatible with all major brands
+/// let has_a_3 = TriState::from(vec![1, 2, 4, 5].contains(&3));
+/// println!("Has a 3: {}", has_a_3); // prints "Has a 3: False"
+/// ```
 pub mod tri;
 
+/// ## `Testing` Utility Module
+/// Contains various utilities for testing.
 #[cfg(test)]
 pub mod testing;
-
-#[allow(
-    clippy::cast_precision_loss,
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    clippy::cast_sign_loss
-)]
-pub fn bresenham_line(a: (usize, usize), b: (usize, usize)) -> Vec<(usize, usize)> {
-    let mut points = Vec::new();
-    let mut x1 = a.0 as i32;
-    let mut y1 = a.1 as i32;
-    let mut x2 = b.0 as i32;
-    let mut y2 = b.1 as i32;
-    let is_steep = (y2 - y1).abs() > (x2 - x1).abs();
-    if is_steep {
-        std::mem::swap(&mut x1, &mut y1);
-        std::mem::swap(&mut x2, &mut y2);
-    }
-    let mut reversed = false;
-    if x1 > x2 {
-        std::mem::swap(&mut x1, &mut x2);
-        std::mem::swap(&mut y1, &mut y2);
-        reversed = true;
-    }
-    let dx = x2 - x1;
-    let dy = (y2 - y1).abs();
-    let mut err = dx / 2;
-    let mut y = y1;
-    let ystep: i32;
-    if y1 < y2 {
-        ystep = 1;
-    } else {
-        ystep = -1;
-    }
-    for x in x1..=x2 {
-        if is_steep {
-            points.push((y as usize, x as usize));
-        } else {
-            points.push((x as usize, y as usize));
-        }
-        err -= dy;
-        if err < 0 {
-            y += ystep;
-            err += dx;
-        }
-    }
-
-    if reversed {
-        for i in 0..(points.len() / 2) {
-            let end = points.len() - 1;
-            points.swap(i, end - i);
-        }
-    }
-
-    points
-}
-
-/// Return the square root of `n` if `n` is square, `None` otherwise.
-///
-/// # Example
-///
-/// ```
-/// use pathfinding::utils::uint_sqrt;
-///
-/// assert_eq!(uint_sqrt(100usize), Some(10));
-/// assert_eq!(uint_sqrt(10usize), None);
-/// ```
-#[inline]
-pub fn uint_sqrt<T>(n: T) -> Option<T>
-where
-    T: PrimInt + Unsigned,
-{
-    let root = n.integer_sqrt();
-    (n == root * root).then(|| root)
-}
-
-/// Compute the absolute difference between two values.
-///
-/// # Example
-///
-/// The absolute difference between 4 and 17 as unsigned values will be 13.
-///
-/// ```
-/// use pathfinding::utils::absdiff;
-///
-/// assert_eq!(absdiff(4u32, 17u32), 13u32);
-/// assert_eq!(absdiff(17u32, 4u32), 13u32);
-/// ```
-#[inline]
-pub fn absdiff<T>(x: T, y: T) -> T
-where
-    T: std::ops::Sub<Output = T> + PartialOrd,
-{
-    if x < y {
-        y - x
-    } else {
-        x - y
-    }
-}
-
-
+#[cfg(test)]
+pub mod test_framework;

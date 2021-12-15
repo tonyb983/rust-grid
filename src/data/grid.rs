@@ -1,70 +1,24 @@
-//! This module contains the implementation of [`crate::data::grid::MapGrid`].
-//! 
-//! It is a 2D grid of [`crate::data::cell::TriCell`]s, with many utility functions
-//! for manipulating, modifying, and querying the grid.
-//! 
-//! Basic Examples:
-//! ```
-//! # use crate::data::grid::MapGrid;
-//! # use crate::data::cell::TriCell;
-//! 
-//! /// A new MapGrid full of 100 invalid cells.
-//! let mut grid = MapGrid::new(10, 10);
-//! assert_eq!(grid.size().into(), (10, 10));
-//! assert!(grid.cell((5, 5)).unwrap().is_invalid());
-//! assert!(grid.cell((10,10)).is_none());
-//! 
-//! /// A new MapGrid full of 25 cells.
-//! let mut grid = MapGrid::empty(5, 5);
-//! assert_eq!(grid.to_strings().join("\n"), ".....\n.....\n.....\n.....\n.....\n");
-//! 
-//! /// Set the edges of the grid to ON
-//! assert!(grid.cell((0, 0)).unwrap().is_off());
-//! assert!(grid.cell((4, 4)).unwrap().is_off());
-//! grid.set_outer_cells(true);
-//! assert!(grid.cell((0, 0)).unwrap().is_on());
-//! assert!(grid.cell((4, 4)).unwrap().is_on());
-//! assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#...#\n#...#\n#####\n");
-//! 
-//! /// Iterate over all cells
-//! for cell in grid.iter() {
-//!     assert!(cell.is_valid());
-//! }
-//! 
-//! /// Iterate over each cell and position mutably
-//! for (pos, cell) in grid.iter_pos_mut() {
-//!     if pos == (2, 2).into() {
-//!        cell.set_state(TriCell::on());
-//!    }
-//! }
-//! 
-//! assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#.#.#\n#...#\n#####\n");
-//! ```
+use std::{fs::File, io::Read, num::ParseIntError, path::Path};
 
-use std::{fs::File, io::Read, num::ParseIntError, ops::Range, path::Path};
-
-use euclid::Size2D;
-use log::{debug, error, info, trace, warn};
 use pathfinding::grid::Grid as PFGrid;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::{
-        cell::{MapBlock, TriCell as Cell},
-        size,
-        types::{pos, square, GridIndex, GridPos, GridSquare},
-        AsPos, GridSize,
-    },
+    data::{size, square, Cell, GridPos, GridSize, GridSquare},
     gen::room_gen::GridClassification,
+    logging::{error, info, trace, warn},
     util::tri::TriState,
 };
 
+/// An iterator over all of the cells in a grid, in row-major order.
 pub struct GridIterator<'lifetime> {
     grid: &'lifetime MapGrid,
     curr: (usize, usize),
 }
 
 impl<'a> GridIterator<'a> {
+    /// Creates a new [`GridIterator`] over the given [`MapGrid`].
+    #[must_use]
     pub fn new(grid: &'a MapGrid) -> Self {
         Self { grid, curr: (0, 0) }
     }
@@ -103,8 +57,10 @@ impl<'a> IntoIterator for &'a MapGrid {
 
 const INVALID_MARKERS: [char; 3] = ['X', '@', '!'];
 
+/// The result of a [`MapGrid`] file parsing operation.
 pub type MapFileParseResult = Result<(MapGrid, GridPos, GridPos), Vec<String>>;
 
+/// An error that occurs during a [`MapGrid`] parsing operation.
 #[derive(Debug, Clone)]
 pub struct MapParseError(String);
 
@@ -121,6 +77,10 @@ impl MapGrid {
     /// Creates a new grid with the given width and height, setting all cells to `Invalid`.
     ///
     /// *For a new empty grid, use [`MapGrid::empty()`] instead.*
+    ///
+    /// ### Panics
+    /// Function panics if the size provided is less than 3x3.
+    #[must_use]
     pub fn new<Size: Into<GridSize> + std::fmt::Debug>(size: Size) -> Self {
         trace!("MapGrid::new({:?})", size);
         let (width, height) = size.into().into();
@@ -150,6 +110,7 @@ impl MapGrid {
     }
 
     /// Creates a new [`MapGrid`] with the given `size`, with `name` set for it's name.
+    #[must_use]
     pub fn new_named<Size: Into<GridSize> + std::fmt::Debug, Text: AsRef<str> + std::fmt::Debug>(
         name: Text,
         size: Size,
@@ -162,6 +123,10 @@ impl MapGrid {
     }
 
     /// Creates a new grid with the given width and height, setting all cells to `False` or `off`.
+    ///
+    /// ### Panics
+    /// Function panics if the size provided is less than 3x3.
+    #[must_use]
     pub fn empty<Size: Into<GridSize> + std::fmt::Debug>(size: Size) -> Self {
         trace!("MapGrid::empty({:?})", size);
         let (width, height) = size.into().into();
@@ -191,6 +156,7 @@ impl MapGrid {
     }
 
     /// Creates a new *named* grid with the given width and height, setting all cells to `False` or `off`.
+    #[must_use]
     pub fn empty_named<
         Size: Into<GridSize> + std::fmt::Debug,
         Text: AsRef<str> + std::fmt::Debug,
@@ -205,6 +171,10 @@ impl MapGrid {
     }
 
     /// Creates a new grid with the given width and height, with each cell randomly set.
+    ///
+    /// ### Panics
+    /// Function panics if the size provided is less than 3x3.
+    #[must_use]
     pub fn random<Size: Into<GridSize> + std::fmt::Debug>(size: Size) -> Self {
         trace!("MapGrid::random({:?})", size);
         let (width, height) = size.into().into();
@@ -234,6 +204,7 @@ impl MapGrid {
     }
 
     /// Creates a new *named* grid with the given width and height, with each cell randomly set.
+    #[must_use]
     pub fn random_named<
         Text: AsRef<str> + std::fmt::Debug,
         Size: Into<GridSize> + std::fmt::Debug,
@@ -249,11 +220,15 @@ impl MapGrid {
     }
 
     /// Creates a grid with [`fill_percent`]% of the cells set to `True` or `on`.
+    ///
+    /// ### Panics
+    /// Function panics if the size given is less than 3x3.
     #[allow(
         clippy::cast_possible_truncation,
         clippy::cast_precision_loss,
         clippy::cast_sign_loss
     )]
+    #[must_use]
     pub fn random_fill_percent<Size: Into<GridSize> + std::fmt::Debug>(
         size: Size,
         fill_percent: f64,
@@ -280,6 +255,7 @@ impl MapGrid {
     }
 
     /// Creates a grid with [`fill_number`] cells set to `True` or `on`.
+    #[must_use]
     pub fn random_fill_number<Size: Into<GridSize> + std::fmt::Debug>(
         size: Size,
         fill_number: usize,
@@ -306,25 +282,28 @@ impl MapGrid {
 
     /// Creates a copy of the given grid. If the given grid has a name,
     /// the returned copy will be named "<Name> (Copy)"
+    #[must_use]
     pub fn create_copy(other: &Self) -> Self {
         trace!("MapGrid::create_copy()");
 
         let mut grid = Self::empty(other.size());
-        if other.has_name() {
-            grid.set_name(format!("{} (Copy)", other.name_ref().as_ref().unwrap()));
+        if let Some(n) = other.name_ref() {
+            grid.set_name(format!("{} (Copy)", n));
         }
 
-        for y in 0..other.height {
-            for x in 0..other.width {
-                grid.set_cell(x, y, *other.cell((x, y)).unwrap());
-            }
+        for (pos, &cell) in other.iter_pos() {
+            grid.set_cell(pos.0, pos.1, cell);
         }
 
         grid
     }
 
-    /// Creates a new [`MapGrid`] representing a [`section`](`crate::data::GridSection`) of the given [`original`](`crate::data::grid::MapGrid`) [`MapGrid`].
+    /// Creates a new [`MapGrid`](`crate::data::MapGrid`) representing a [`section`](`crate::data::GridSection`) of the given [`original`](`crate::data::grid::MapGrid`) [`MapGrid`].
+    ///
+    /// ### Panics
+    ///
     #[allow(clippy::cast_possible_wrap)]
+    #[must_use]
     pub fn sub_grid(original: &Self, section: &GridSquare) -> Self {
         // trace!("MapGrid::sub_grid({:?})", section);
         // Create X array
@@ -337,11 +316,8 @@ impl MapGrid {
         let (x_range, y_range) = (section.cast().x_range(), section.cast().y_range());
 
         let mut grid = Self::new(sub_size);
-        if original.has_name() {
-            grid.set_name(format!(
-                "SubGrid of {}",
-                original.name_ref().as_ref().unwrap()
-            ));
+        if let Some(name) = original.name_ref() {
+            grid.set_name(format!("SubGrid of {}", name));
         }
 
         for (thisx, otherx) in x_range.enumerate() {
@@ -362,6 +338,7 @@ impl MapGrid {
 
     /// Creates a new [`MapGrid`] using the given `row` [`GridClassification`] and `col` [`GridClassification`]
     /// to determine the size, and `default_state` to set the initial state of each cell.
+    #[must_use]
     pub fn create_sized(
         row: GridClassification,
         col: GridClassification,
@@ -383,6 +360,7 @@ impl MapGrid {
     }
 
     /// Creates a new [`MapGrid`] from `other` with all cells reversed.
+    #[must_use]
     pub fn reverse(other: &Self) -> Self {
         let mut grid = Self::create_copy(other);
         for cell in grid.iter_mut() {
@@ -393,8 +371,9 @@ impl MapGrid {
     }
 
     /// Combines multiple [`MapGrid`]s into a single [`MapGrid`].
+    #[must_use]
     pub fn combine_multiple(grids: &[(&Self, GridPos)]) -> Self {
-        let mut max_width: usize = {
+        let max_width: usize = {
             let mut max = 0;
             for (grid, pos) in grids {
                 let x = grid.width + pos.x;
@@ -405,7 +384,7 @@ impl MapGrid {
 
             max
         };
-        let mut max_height: usize = {
+        let max_height: usize = {
             let mut max = 0;
             for (grid, pos) in grids {
                 let y = grid.height + pos.y;
@@ -426,9 +405,71 @@ impl MapGrid {
         grid
     }
 
+    /// Convenience function which calls:
+    /// ```
+    /// # use dungen::data::MapGrid;
+    /// # use dungen::data::Cell;
+    /// # let mut grid = MapGrid::new(5, 5);
+    /// # assert!(grid.cell_count() == 25);
+    /// # let size = (10,10)
+    /// # let cell_value = Cell::on();
+    /// grid.resize_rows_with(size.0, cell_value);
+    /// grid.resize_cols_with(size.1, cell_value);
+    /// # assert!(grid.cell_count() == 100);
+    /// ```
+    ///
+    /// ### Panics
+    /// - Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    /// - Function panics if the actual resulting size of the grid does not match the expected end size
+    /// (which means something probably went horribly wrong or was horribly coded)
+    pub fn resize_with<P: Into<(usize, usize)>>(&mut self, size: P, cell_value: Cell) {
+        let (width, height) = size.into();
+        if self.width != width {
+            self.resize_rows_with(height, cell_value);
+        }
+        if self.height != height {
+            self.resize_cols_with(width, cell_value);
+        }
+    }
+
+    /// Combines the data from the `first` [`MapGrid`] with the data from the
+    /// `other` [`MapGrid`], prioritizing the data in `other` for any conflicts.
+    #[must_use]
+    pub fn union(first: &Self, other: &Self) -> Self {
+        Self::integrate(first, other, (0, 0).into())
+    }
+
+    /// Creates a new [`MapGrid`] using the existing data from this instance,
+    /// adding the data from the other instance.
+    ///
+    /// #### Does *not* modify the original existing instance.
+    #[must_use]
+    pub fn integrate(first: &Self, other: &Self, offset: GridPos) -> Self {
+        let (other_width, other_height) = other.size().into();
+        let (self_width, self_height) = first.size().into();
+        let (start_x, start_y) = offset.into();
+
+        let new_width = std::cmp::max(self_width, start_x + other_width);
+        let new_height = std::cmp::max(self_height, start_y + other_height);
+        let mut result = MapGrid::new((new_width, new_height));
+        for ((x, y), &cell) in first.iter_pos() {
+            result.set_cell(x, y, cell);
+        }
+        for ((x, y), &cell) in other.iter_pos() {
+            result.set_cell(x + start_x, y + start_y, cell);
+        }
+
+        result
+    }
+
+    /// ## [`MapGrid::parse_string`]
     /// Attempts to parse a string into a grid, using the given on and off characters to determine
     /// the state of each cell. Will return a new [`MapGrid`] if the string is successfully parsed,
     /// or a [`String`] containing the error message if it fails.
+    ///
+    /// ### Errors
+    /// Function will return an error if the string does not form a valid grid.
     #[allow(clippy::too_many_lines)]
     pub fn parse_string<S: AsRef<str> + std::fmt::Debug>(
         input: S,
@@ -473,7 +514,7 @@ impl MapGrid {
         if split[0].starts_with(|c: char| c != on && c != off && c.is_numeric()) {
             info!("MapGrid::parse_string - Found unexpected character at start of line, assuming grid dimensions: {:?}", split[0]);
             let line = split.remove(0);
-            let mut halves = line
+            let halves = line
                 .split_ascii_whitespace()
                 .map(std::string::ToString::to_string)
                 .collect::<Vec<String>>();
@@ -535,7 +576,7 @@ impl MapGrid {
         grid.name = name;
 
         for (y, line) in split.iter().enumerate() {
-            let row_size = line.len();
+            // let row_size = line.len();
             for (x, ch) in line.chars().enumerate() {
                 if ch == on {
                     grid.set_cell_state(x, y, true);
@@ -571,15 +612,24 @@ impl MapGrid {
         }
     }
 
+    /// ## [`MapGrid::parse_file`](`crate::data::MapGrid::parse_file`)
     /// Parse a plain text file into a [`MapGrid`].
     ///
     /// The file format is:
     ///
-    /// `MapName`
+    /// ```ignore
+    /// <MapName>[\n]
+    /// <MapWidth>[space]<MapHeight>[\n]
+    /// <MapData>
+    /// ```
     ///
-    /// `MapWidth` `MapHeight`
+    /// ### Errors
+    /// Function will return an error if the file does not exist, cannot be opened, or does
+    /// not represent a valid / parsable grid.
     ///
-    /// `MapData`
+    /// ### Panics
+    /// Function panics if the return value from [`std::fs::Metadata::len`] cannot be converted
+    /// into a [`usize`] (which seems very unlikely).
     pub fn parse_map_file<P: AsRef<Path> + std::fmt::Debug>(path: P) -> MapFileParseResult {
         trace!("MapGrid::parse_map_file({:?})", path);
         let mut file = File::open(path).map_err(|e| vec![e.to_string()])?;
@@ -601,7 +651,7 @@ impl MapGrid {
         }
 
         let name = split[0].trim().to_string();
-        let mut dims: Vec<Result<usize, ParseIntError>> =
+        let dims: Vec<Result<usize, ParseIntError>> =
             split[1].split_whitespace().map(str::parse).collect();
         if dims.len() != 2 {
             let msg = "Invalid map file - Format is <Name>\\n<Width> <Height>\\n<Map>".to_string();
@@ -670,18 +720,21 @@ impl MapGrid {
 
 impl MapGrid {
     /// Gets a reference to the name of the grid.
+    #[must_use]
     pub fn name_ref(&self) -> &Option<String> {
         trace!("MapGrid::name_ref()");
         &self.name
     }
 
     /// Gets a mutable reference to the name of the grid.
+    #[must_use]
     pub fn name_ref_mut(&mut self) -> &mut Option<String> {
         trace!("MapGrid::name_ref_mut()");
         &mut self.name
     }
 
     /// Gets a copy of the name of the grid if it has one, or `None` if it doesn't.
+    #[must_use]
     pub fn name_copy(&self) -> Option<String> {
         trace!("MapGrid::name_copy()");
         self.name.clone()
@@ -700,6 +753,7 @@ impl MapGrid {
     }
 
     /// Returns true if the grid has been given a name.
+    #[must_use]
     pub fn has_name(&self) -> bool {
         trace!("MapGrid::has_name()");
         self.name.is_some()
@@ -707,6 +761,7 @@ impl MapGrid {
 
     /// Returns a newly constructed [`Vec`] containing the [`crate::data::GridPos`] and cell
     /// of each cell in this [`MapGrid`].
+    #[must_use]
     pub fn dump_all_cells(&self) -> Vec<(GridPos, Cell)> {
         let mut result = Vec::with_capacity(self.width * self.height);
 
@@ -718,24 +773,29 @@ impl MapGrid {
     }
 
     /// Returns the height or number of rows in the grid.
+    #[must_use]
     pub fn rows(&self) -> usize {
         trace!("MapGrid::rows()");
         self.height
     }
 
     /// Returns the width or number of columns in the grid.
+    #[must_use]
     pub fn cols(&self) -> usize {
         trace!("MapGrid::cols()");
         self.width
     }
 
+    /// Gets the size of this [`MapGrid`]() as a [`GridSize`].
+    #[must_use]
     pub fn size(&self) -> GridSize {
         trace!("MapGrid::size()");
 
         (self.width, self.height).into()
     }
 
-    /// Gets the position of a random cell in the grid.
+    /// Gets the position (x,y) of a random cell in the grid.
+    #[must_use]
     pub fn random_cell_pos(&self) -> GridPos {
         trace!("MapGrid::random_cell_pos()");
 
@@ -747,73 +807,70 @@ impl MapGrid {
     }
 
     /// Gets a reference to a random cell in the grid.
+    ///
+    /// ### Panics
+    /// Function panics if the cell returned from [`random_cell`](`crate::data::MapGrid`)
+    /// cannot be unwrapped (which should ostensibly never happen).
+    #[must_use]
     pub fn random_cell(&self) -> &Cell {
         trace!("MapGrid::random_cell()");
         let (row, col) = self.random_cell_pos().into();
 
-        self.cell((col, row)).unwrap()
+        self.cell((col, row)).unwrap_or_else(|| &self.cells[0][0])
     }
 
     /// Gets a mutable reference to a random cell in the grid.
+    ///
+    /// ### Panics
+    /// Function panics if the cell returned from [`random_cell`](`crate::data::MapGrid`)
+    /// cannot be unwrapped (which should ostensibly never happen).
+    #[must_use]
     pub fn random_cell_mut(&mut self) -> &mut Cell {
         trace!("MapGrid::random_cell()");
         let (row, col) = self.random_cell_pos().into();
 
-        self.cell_mut(col, row).unwrap()
+        self.cell_mut(col, row)
+            .expect("random_cell_mut cell returned from cell_mut is none!")
     }
 
-    /// Gets the number of cells in the grid.
+    /// Gets the number of cells in the grid by simply multiplying the width and height.
+    #[must_use]
     pub fn cell_count(&self) -> usize {
         trace!("MapGrid::cell_count()");
         self.width * self.height
     }
 
     /// Gets the number of cells in the grid whose state is on.
+    #[must_use]
     pub fn on_cells_count(&self) -> usize {
         trace!("MapGrid::on_cells_count()");
-        let mut count = 0usize;
-        for cell in self.iter().filter(|&&c| c.is_on()) {
-            count += 1;
-        }
-
-        count
+        self.iter().filter(|&&c| c.is_on()).count()
     }
 
     /// Gets the number of cells in the grid whose state is off.
+    #[must_use]
     pub fn off_cells_count(&self) -> usize {
         trace!("MapGrid::off_cells_count()");
-        let mut count = 0usize;
-        for cell in self.iter().filter(|&&c| c.is_off()) {
-            count += 1;
-        }
-
-        count
+        self.iter().filter(|&&c| c.is_off()).count()
     }
 
     /// Gets the number of cells in the grid whose state is valid.
+    #[must_use]
     pub fn valid_cells_count(&self) -> usize {
         trace!("MapGrid::valid_cells_count()");
-        let mut count = 0usize;
-        for cell in self.iter().filter(|&&c| c.is_valid()) {
-            count += 1;
-        }
-
-        count
+        self.iter().filter(|&&c| c.is_valid()).count()
     }
 
     /// Returns the number of cells in the grid whose state is invalid.
+    #[must_use]
     pub fn invalid_cells_count(&self) -> usize {
         trace!("MapGrid::invalid_cells_count()");
-        let mut count = 0usize;
-        for cell in self.iter().filter(|&&c| c.is_invalid()) {
-            count += 1;
-        }
-
-        count
+        self.iter().filter(|&&c| c.is_invalid()).count()
     }
 
     /// Calculates the percentage of (**on**, **off**, **invalid**) cells in the grid.
     #[allow(clippy::cast_precision_loss)]
+    #[must_use]
     pub fn cell_state_ratio(&self) -> (f64, f64, f64) {
         trace!("MapGrid::cell_state_ratio()");
         let total = self.cell_count();
@@ -836,7 +893,7 @@ impl MapGrid {
         let on_ratio = (on as f64) / (total as f64);
         let off_ratio = (off as f64) / (total as f64);
         let invalid_ratio = 1.0 - on_ratio - off_ratio;
-        let total = on_ratio + off_ratio + invalid_ratio;
+        // let total = on_ratio + off_ratio + invalid_ratio;
 
         (on_ratio, off_ratio, invalid_ratio)
     }
@@ -858,6 +915,7 @@ impl MapGrid {
 
     /// Gets a reference to the cell at the given x and y, wrapping them if they are out of bounds.
     #[allow(clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+    #[must_use]
     pub fn cell_wrapped(&self, x: isize, y: isize) -> Option<&Cell> {
         trace!("MapGrid::cell_wrap({}, {})", x, y);
         let xx = if x < 0 {
@@ -963,9 +1021,10 @@ impl MapGrid {
     }
 
     /// Gets the coordinates of the neighbors to the given cell, truncating edges.
-    pub fn neighbor_positions(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
+    #[must_use]
+    pub fn neighbor_positions<P: Into<(usize,usize)>>(&self, target_pos: P) -> Vec<(usize, usize)> {
+        let pos = target_pos.into();
         trace!("MapGrid::neighbor_positions(pos = {:?})", pos);
-
         let xs: Vec<usize> = if pos.0 == 0 {
             vec![0, 1]
         } else if pos.0 == self.width - 1 {
@@ -997,7 +1056,9 @@ impl MapGrid {
     }
 
     /// Gets the coordinates of the neighbors to the given cell, wrapping on edges.
-    pub fn neighbor_positions_wrapping(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
+    #[must_use]
+    pub fn neighbor_positions_wrapping<P: Into<(usize,usize)>>(&self, target_pos: P) -> Vec<(usize, usize)> {
+        let pos = target_pos.into();
         trace!("MapGrid::get_neighbor_positions({:?})", pos);
         info!(
             "Getting neighbors to ({:?}) in grid of size ({},{})",
@@ -1037,12 +1098,14 @@ impl MapGrid {
 
     /// Gets all neighbors of the given position whose state matches `state`. If `wrap_edges` is true,
     /// neighbors will be considered by wrapping first and last rows and columns.
-    pub fn neighbors_with_state(
+    #[must_use]
+    pub fn neighbors_with_state<P: Into<(usize,usize)>>(
         &self,
-        pos: (usize, usize),
+        target_pos: P,
         state: bool,
         wrap_edges: bool,
     ) -> Vec<(usize, usize)> {
+        let pos = target_pos.into();
         trace!("MapGrid::neighbors_with_state({:?}, {})", pos, state);
         let mut neighbors = Vec::new();
         let range = if wrap_edges {
@@ -1060,6 +1123,7 @@ impl MapGrid {
     }
 
     /// Gets the number of neighboring cells whose state is True. This does not include the cell at the given x and y.
+    #[must_use]
     pub fn active_neighbor_count(&self, pos: (usize, usize), wrapped: bool) -> usize {
         trace!(
             "MapGrid::active_neighbor_count(pos = {:?}, wrapped = {})",
@@ -1076,6 +1140,7 @@ impl MapGrid {
 
     /// Gets the number of neighboring cells in the range (pos.x - x)..=(pos.x + x) x (pos.y - y)..=(pos.y + y)
     /// whose state is `on` or `active`.
+    #[must_use]
     pub fn active_neighbors_n(&self, x: usize, y: usize, n: usize) -> usize {
         trace!("MapGrid::active_neighbors_n({}, {}, {})", x, y, n);
         if n == 0 {
@@ -1147,6 +1212,10 @@ impl MapGrid {
     /// Creates a new grid from the given [`section`](`crate::data::types::GridSquare`) of the current grid.
     ///
     /// TODO: Fix this to either handle overflow (by wrapping) or fail more gracefully.
+    ///
+    /// ### Panics
+    /// Function panics if the size of `section` is less than 3x3.
+    #[must_use]
     pub fn create_subgrid(&self, section: &GridSquare) -> Self {
         if section.height() < 3 || section.width() < 3 {
             error!("Invalid GridSquare size: {:?}", section);
@@ -1165,93 +1234,175 @@ impl MapGrid {
         MapGrid::sub_grid(self, section)
     }
 
-    /// Expands this [`MapGrid`] by the given number of rows and/or columns.
-    pub fn expand_by(&mut self, cols: usize, rows: usize, fill: Cell) {
-        let (curr_width, curr_height) = self.size().into();
-        for row in &mut self.cells {
-            row.extend(std::iter::repeat(fill).take(cols));
-        }
-        self.cells
-            .extend(std::iter::repeat(vec![fill; curr_width + cols]).take(rows));
-
-        assert_eq!(
-            self.cells.len(),
-            curr_height + rows,
-            "Actual height does not match current height + rows"
-        );
-        assert_eq!(
-            self.cells[0].len(),
-            curr_width + cols,
-            "Actual width does not match current width + cols"
-        );
-
-        self.width += cols;
-        self.height += rows;
+    /// Resize all rows in the grid to the given size, using [`crate::data::Cell::invalid()`]
+    /// as the default value for each added cell. Rows cannot be resized to be less than
+    /// 3. If grid currently already has `new_row_size` rows, function will early out.
+    ///
+    /// #### This changes the SIZE OF EACH ROW aka the width of the [`MapGrid`], NOT the ROW COUNT (which would be the height).
+    /// ##### This is the same as calling [`MapGrid::resize_rows_with(new_row_size, Cell::invalid())`].
+    ///
+    /// ### Panics
+    /// Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    pub fn resize_rows(&mut self, new_row_size: usize) {
+        trace!("MapGrid::resize_rows({})", new_row_size);
+        self.resize_rows_with(new_row_size, Cell::invalid());
     }
 
-    /// Combines the data from the `first` [`MapGrid`] with the data from the
-    /// `other` [`MapGrid`], prioritizing the data in `other` for any conflicts.
-    pub fn union_with(first: &Self, other: &Self) -> Self {
-        first.integrate(other, (0, 0).into())
+    /// Resize all rows in the grid to the given size, using `cell_value` as the
+    /// default value for each added cell. Rows cannot be resized to be less than
+    /// 3. If grid currently already has `new_row_size` rows, function will early out.
+    ///
+    /// #### This changes the SIZE OF EACH ROW aka the width of the [`MapGrid`], NOT the ROW COUNT (which would be the height).
+    ///
+    /// ### Panics
+    /// Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    pub fn resize_rows_with(&mut self, new_row_size: usize, cell_value: Cell) {
+        trace!(
+            "MapGrid::resize_rows_with({}, {:?})",
+            new_row_size,
+            cell_value
+        );
+        let safe_size = if new_row_size < 3 {
+            error!("MapGrid::resize_rows_with - cannot resize row length to less than 3");
+            3
+        } else {
+            new_row_size
+        };
+
+        if safe_size == self.cols() {
+            info!("MapGrid::resize_rows_with - new size same as current size, bailing on resize");
+            return;
+        }
+
+        for row in &mut self.cells {
+            row.resize(safe_size, cell_value);
+        }
+
+        assert!(
+            self.cells[0].len() == safe_size,
+            "Actual row length (self.cells[0].len() = {}) does not equal safe_size ({})",
+            self.cells[0].len(),
+            safe_size
+        );
+        self.width = safe_size;
+    }
+
+    /// Resize all columns in the grid to the given size, using [`crate::data::Cell::invalid()`]
+    /// as the default value for each added cell. Column count cannot be than 3.
+    /// If grid currently already has `new_column_size` columns, function will early out.
+    ///
+    /// #### This changes the SIZE OF EACH COLUMN aka the height of the [`MapGrid`], NOT the COLUMN COUNT (which would be the width).
+    /// ##### This is the same as calling [`MapGrid::resize_cols_with(new_column_size, Cell::invalid())`].
+    ///
+    /// ### Panics
+    /// Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    pub fn resize_cols(&mut self, new_column_size: usize) {
+        trace!("MapGrid::resize_cols({})", new_column_size);
+        self.resize_cols_with(new_column_size, Cell::invalid());
+    }
+
+    /// Resize all columns in the grid to the given size, using `cell_value` as the
+    /// default value for each added cell. Column count cannot be less than 3.
+    /// If grid currently already has `new_column_size` columns, function will early out.
+    ///
+    /// #### This changes the SIZE OF EACH COLUMN aka the height of the [`MapGrid`], NOT the COLUMN COUNT (which would be the width).
+    ///
+    /// ### Panics
+    /// Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    pub fn resize_cols_with(&mut self, new_column_size: usize, cell_value: Cell) {
+        trace!(
+            "MapGrid::resize_cols_with({}, {:?})",
+            new_column_size,
+            cell_value
+        );
+        let safe_size = if new_column_size < 3 {
+            error!("MapGrid::resize_cols_with - cannot resize column count to less than 3");
+            3
+        } else {
+            new_column_size
+        };
+
+        if safe_size == self.cols() {
+            info!("MapGrid::resize_cols_with - new size same as current size, bailing on resize");
+            return;
+        }
+
+        let row_size = self.rows();
+        self.cells.resize(safe_size, vec![cell_value; row_size]);
+        assert!(
+            self.cells.len() == safe_size,
+            "Actual col length (self.cells.len() = {}) does not equal safe_size ({})",
+            self.cells.len(),
+            safe_size
+        );
+        self.height = safe_size;
+    }
+
+    /// Convenience function which calls:
+    /// ```
+    /// # let mut grid = MapGrid::new(5, 5);
+    /// # assert!(grid.cell_count() == 25);
+    /// # let size = (10,10)
+    /// grid.resize_rows(size.0);
+    /// grid.resize_cols(size.1);
+    /// # assert!(grid.cell_count() == 100);
+    /// ```
+    ///
+    /// ### Panics
+    /// - Function panics if the resulting size of the grid is less than 3x3, which should not happen
+    /// because the function first checks if the result is going to be less than 3.
+    /// - Function panics if the actual resulting size of the grid does not match the expected end size
+    /// (which means something probably went horribly wrong or was horribly coded)
+
+    pub fn resize<P: Into<(usize, usize)>>(&mut self, size: P) {
+        let (width, height) = size.into();
+        if self.width != width {
+            self.resize_rows(width);
+        }
+        if self.height != height {
+            self.resize_cols(height);
+        }
+
+        let new_current: (usize, usize) = self.size().into();
+        if new_current.0 != width.max(3) || new_current.1 != height.max(3) {
+            error!(
+                "MapGrid::resize - grid not set to the expected size. Actual = {:?} Expected = {:?}",
+                self.size(),
+                (width, height)
+            );
+            panic!("MapGrid::resize - failed to resize to requested size");
+        }
     }
 
     /// Modifies this [`MapGrid`] by adding the contents of `other` to it
     /// at position (0,0).
-    pub fn union_with_in_place(&mut self, other: &Self) {
+    pub fn union_in_place(&mut self, other: &Self) {
         self.integrate_in_place(other, (0, 0).into());
-    }
-
-    /// Creates a new [`MapGrid`] using the existing data from this instance,
-    /// adding the data from the other instance.
-    ///
-    /// #### Does *not* modify the original existing instance.
-    pub fn integrate(&self, other: &Self, offset: GridPos) -> Self {
-        let (other_width, other_height) = other.size().into();
-        let (self_width, self_height) = self.size().into();
-        let (start_x, start_y) = offset.into();
-
-        let new_width = std::cmp::max(self_width, start_x + other_width);
-        let new_height = std::cmp::max(self_height, start_y + other_height);
-        let mut result = MapGrid::new((new_width, new_height));
-        for ((x, y), cells) in self.iter_pos() {
-            result.set_cell(x, y, *self.cell((x, y)).unwrap_or(&Cell::invalid()));
-        }
-        for ((x, y), cells) in other.iter_pos() {
-            result.set_cell(
-                x + start_x,
-                y + start_y,
-                *other.cell((x, y)).unwrap_or(&Cell::invalid()),
-            );
-        }
-
-        result
     }
 
     /// Integrates the given [`MapGrid`] into this one at the given position. Newer data
     /// (from `other`) will take precedence over the currently existing data. This
     /// [`MapGrid`] will be resized if necessary.
     pub fn integrate_in_place(&mut self, other: &Self, offset: GridPos) {
-        let (other_width, other_height) = other.size().into();
-        let (start_x, start_y) = offset.into();
-
-        let new_width = self.width.max(start_x + other_width);
-        let diff_width = std::cmp::min(new_width.checked_sub(self.width).unwrap_or(usize::MAX), 0);
-        let new_height = self.height.max(start_y + other_height);
-        let diff_height =
-            std::cmp::min(new_height.checked_sub(self.height).unwrap_or(usize::MAX), 0);
-        if diff_width > 0 || diff_height > 0 {
-            self.expand_by(diff_width, diff_height, Cell::invalid());
+        let offset_size = (other.width + offset.x, other.height + offset.y);
+        if other.width + offset.x > self.width || other.height + offset.y > self.height {
+            self.resize((
+                offset_size.0.max(self.width),
+                offset_size.1.max(self.height),
+            ));
         }
-        for ((x, y), cells) in other.iter_pos() {
-            self.set_cell(
-                x + start_x,
-                y + start_y,
-                *other.cell((x, y)).unwrap_or(&Cell::invalid()),
-            );
+
+        for ((x, y), &cell) in other.iter_pos() {
+            self.set_cell(x + offset.x, y + offset.y, cell);
         }
     }
 
     /// Converts this [`MapGrid`] into an instance of [`pathfinding::grid::Grid`].
+    #[must_use]
     pub fn to_pf_grid(&self) -> PFGrid {
         let mut pf_grid = PFGrid::new(self.width, self.height);
         pf_grid.enable_diagonal_mode();
@@ -1267,6 +1418,7 @@ impl MapGrid {
 
     /// Converts the grid to a [Vec] of [String]s, with each cell represented by the given
     /// character.
+    #[must_use]
     pub fn to_strings_with(&self, on: char, off: char) -> Vec<String> {
         trace!("MapGrid::to_strings_with({}, {})", on, off);
 
@@ -1305,6 +1457,7 @@ impl MapGrid {
 
     /// Converts the grid to a [String] with each cell represented by the given on and off
     /// characters, with each row separated by the given separator.
+    #[must_use]
     pub fn to_string_with(&self, on: char, off: char, div: char) -> String {
         trace!("MapGrid::to_string_with({}, {}, {})", on, off, div);
         self.to_strings_with(on, off).join(&div.to_string())
@@ -1312,6 +1465,7 @@ impl MapGrid {
 
     /// Gets a [Vec] of [String]s representing the grid, using the default on and off
     /// characters (`'#'` and `'.'` respectively).
+    #[must_use]
     pub fn to_strings(&self) -> Vec<String> {
         trace!("MapGrid::to_strings()");
         self.to_strings_with('#', '.')
@@ -1328,28 +1482,40 @@ impl MapGrid {
 /// Serialization and Deserialization implementations.
 impl MapGrid {
     /// Parse the given [`input`] [`serde_json::Value`] into a [`MapGrid`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::from_value`] fails.
+    ///
     /// ##### See also: [`serde_json::from_value`]
     pub fn from_json<J: Into<serde_json::Value>>(input: J) -> Result<Self, serde_json::Error> {
         serde_json::from_value(input.into())
     }
 
     /// Parse the given [`input`] string into a [`MapGrid`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::from_str`] fails.
+    ///
     /// ##### See also: [`serde_json::from_str`]
     pub fn from_json_str<S: AsRef<str>>(input: S) -> Result<Self, serde_json::Error> {
         serde_json::from_str(input.as_ref())
     }
 
     /// Parse the given [`input`] bytes into a [`MapGrid`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::from_slice`] fails.
+    ///
     /// ##### See also: [`serde_json::from_slice`]
     pub fn from_json_bytes<B: AsRef<[u8]>>(input: B) -> Result<Self, serde_json::Error> {
         serde_json::from_slice(input.as_ref())
     }
 
     /// Parse the given [`reader`] into a [`MapGrid`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::from_reader`] fails.
+    ///
     /// ##### See also: [`serde_json::from_reader`]
     pub fn from_json_reader<R: Read>(reader: R) -> Result<Self, serde_json::Error> {
         serde_json::from_reader(reader)
@@ -1357,7 +1523,10 @@ impl MapGrid {
 
     /// Open the [`path`](`std::convert::AsRef<std::path::Path>`) and parses the resulting
     /// reader into a [`MapGrid`] using [`MapGrid::from_json_reader`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::from_reader`] fails.
+    ///
     /// ##### See also: [`serde_json::from_reader`]
     pub fn from_json_file<P: AsRef<std::path::Path>>(path: P) -> serde_json::Result<Self> {
         match File::open(path) {
@@ -1367,14 +1536,20 @@ impl MapGrid {
     }
 
     /// Serialize this [`MapGrid`] into a [`Json Value`](`serde_json::Value`).
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::to_value`] fails.
+    ///
     /// ##### See also: [`serde_json::to_value`]
     pub fn to_json(&self) -> Result<serde_json::Value, serde_json::Error> {
         serde_json::to_value(self)
     }
 
     /// Serialize this [`MapGrid`] into a [`Byte Array`](`std::collections::Vec<u8>`).
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::to_vec`] fails.
+    ///
     /// ##### See also: [`serde_json::to_vec`]
     pub fn to_json_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
         serde_json::to_vec(self)
@@ -1382,7 +1557,10 @@ impl MapGrid {
 
     /// Serialize this [`MapGrid`] into a [`String`] containing the json. The [`pretty`]
     /// argument determines whether it is converted with pretty indentation for display.
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`serde_json::to_string`] or [`serde_json::to_string_pretty`] fails.
+    ///
     /// ##### See also: [`serde_json::to_string`] [`serde_json::to_string_pretty`]
     pub fn to_json_string(&self, pretty: bool) -> Result<String, serde_json::Error> {
         if pretty {
@@ -1396,6 +1574,9 @@ impl MapGrid {
     /// containing msgpack data into a new [`MapGrid`]. This is performed in zero-copy manner whenever it
     /// is possible, borrowing the data from the reader itself. For example, strings and byte-arrays won’t
     /// be not copied.
+    ///
+    /// ### Errors
+    /// Function errors if [`rmp_serde::from_read_ref`] fails.
     ///  
     /// ##### See also: [`rmp_serde::from_read_ref`].
     pub fn from_msgpack_ref<R: AsRef<[u8]> + ?Sized>(
@@ -1405,14 +1586,20 @@ impl MapGrid {
     }
 
     /// Deserialize the given [`reader`](std::io::Read) containing msgpack data into a [`MapGrid`].
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`rmp_serde::from_read`] fails.
+    ///
     /// ##### See also: [`rmp_serde::from_read`].
     pub fn from_msgpack_reader<R: Read>(reader: R) -> Result<Self, rmp_serde::decode::Error> {
         rmp_serde::from_read(reader)
     }
 
     /// Serialize this [`MapGrid`] into a [`Vec<u8>`] of msgpack data.
-    /// 
+    ///
+    /// ### Errors
+    /// Function errors if [`rmp_serde::to_vec`] fails.
+    ///
     /// ##### See also: [`rmp_serde::to_vec`]
     pub fn to_msgpack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
         rmp_serde::to_vec(self)
@@ -1443,7 +1630,7 @@ impl From<&PFGrid> for MapGrid {
 
 impl PartialEq for MapGrid {
     /// Checks whether `other` is equal to this [`MapGrid`].
-    /// 
+    ///
     /// This does check ***EACH CELL*** in the [`MapGrid`], but it has early outs
     /// if the dimensions or name of the grids are not equal.
     fn eq(&self, other: &MapGrid) -> bool {
@@ -1520,7 +1707,7 @@ impl std::fmt::Display for MapGrid {
 }
 
 #[cfg(test)]
-#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines, unused)]
 mod tests {
     use super::*;
 
@@ -1529,19 +1716,18 @@ mod tests {
         afe_relative_error_msg, assert_float_absolute_eq, assert_float_relative_eq,
     };
 
-    use crate::util::testing::{before_test, run_tests};
-    use crate::{assert_contains_all, assert_unordered_match};
+    use crate::assert_unordered_match;
+    use crate::data::pos;
+    use crate::util::testing::crate_before_test;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
         crate::util::random::init_rng_seeded(0);
     }
 
-    fn teardown() {}
-
     #[test]
     fn construction_works() {
-        before_test();
+        crate_before_test();
 
         let mut grid = MapGrid::new(size(10, 10));
         assert_eq!(grid.width, 10);
@@ -1586,11 +1772,11 @@ mod tests {
     fn random_fill_works() {
         init();
 
-        let mut grid = MapGrid::random_fill_percent((10, 10), 0.5);
+        let grid = MapGrid::random_fill_percent((10, 10), 0.5);
         assert_eq!(grid.on_cells_count(), 50);
         assert_eq!(grid.off_cells_count(), 50);
 
-        let mut grid = MapGrid::random_fill_number((10, 10), 50);
+        let grid = MapGrid::random_fill_number((10, 10), 50);
         assert_eq!(grid.on_cells_count(), 50);
         assert_eq!(grid.off_cells_count(), 50);
     }
@@ -1887,7 +2073,7 @@ mod tests {
         // #.#####.#
         // #.......#
         // #########
-        let mut grid = MapGrid::parse_string("#########\n#.......#\n#.#####.#\n#.#...#.#\n#.#.#.#.#\n#.#...#.#\n#.#####.#\n#.......#\n#########", '#', '.').expect("Unable to parse grid.");
+        let grid = MapGrid::parse_string("#########\n#.......#\n#.#####.#\n#.#...#.#\n#.#.#.#.#\n#.#...#.#\n#.#####.#\n#.......#\n#########", '#', '.').expect("Unable to parse grid.");
         assert_eq!(grid.width, 9);
         assert_eq!(grid.height, 9);
         assert_eq!(grid.to_strings().join("\n"), "#########\n#.......#\n#.#####.#\n#.#...#.#\n#.#.#.#.#\n#.#...#.#\n#.#####.#\n#.......#\n#########");
@@ -1902,11 +2088,11 @@ mod tests {
         // };
 
         assert_eq!((square.width(), square.height()), (7, 7));
-        assert_eq!(square.size(), Size2D::new(7, 7));
+        assert_eq!(square.size(), size(7, 7));
         assert_eq!(square.center(), pos((4, 4)));
         assert_eq!(square.x_range(), 1..8);
 
-        let mut sub = MapGrid::sub_grid(&grid, &square);
+        let sub = MapGrid::sub_grid(&grid, &square);
         assert_eq!(
             sub.to_strings().join("\n"),
             ".......\n.#####.\n.#...#.\n.#.#.#.\n.#...#.\n.#####.\n......."
@@ -1934,7 +2120,7 @@ mod tests {
     fn cell_ratio() {
         init();
 
-        let mut grid = MapGrid::parse_string("####\n####\n....\n....", '#', '.')
+        let grid = MapGrid::parse_string("####\n####\n....\n....", '#', '.')
             .expect("Failed to parse standard grid, something is very wrong.");
 
         let (on, off, inv) = grid.cell_state_ratio();
@@ -1942,13 +2128,13 @@ mod tests {
         assert_float_relative_eq!(off, 0.5);
         assert_float_absolute_eq!(inv, 0.0);
 
-        let mut grid = MapGrid::new(size(4, 4));
+        let grid = MapGrid::new(size(4, 4));
         let (on, off, inv) = grid.cell_state_ratio();
         assert_float_absolute_eq!(on, 0.0);
         assert_float_absolute_eq!(off, 0.0);
         assert_float_relative_eq!(inv, 1.0);
 
-        let mut grid = MapGrid::empty((4, 4));
+        let grid = MapGrid::empty((4, 4));
         let (on, off, inv) = grid.cell_state_ratio();
         assert_float_absolute_eq!(on, 0.0);
         assert_float_relative_eq!(off, 1.0);
