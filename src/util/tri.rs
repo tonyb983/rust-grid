@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 ///    - [`Debug`], [`PartialEq`], [`Eq`], [`Clone`], [`Copy`], [`Hash`], [`PartialOrd`], [`Ord`]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 #[derive(Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub enum TriState {
     /// True.
     True = 1,

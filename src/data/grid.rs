@@ -5,12 +5,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data::{size, square, Cell, GridPos, GridSize, GridSquare},
-    gen::room_gen::GridClassification,
+    gen::room_based::GridClassification,
     logging::{error, info, trace, warn},
-    util::tri::TriState,
+    util::TriState,
 };
 
 /// An iterator over all of the cells in a grid, in row-major order.
+#[allow(clippy::module_name_repetitions)]
 pub struct GridIterator<'lifetime> {
     grid: &'lifetime MapGrid,
     curr: (usize, usize),
@@ -66,6 +67,7 @@ pub struct MapParseError(String);
 
 /// A map or grid of cells.
 #[derive(Clone, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct MapGrid {
     name: Option<String>,
     width: usize,
@@ -1357,7 +1359,6 @@ impl MapGrid {
     /// because the function first checks if the result is going to be less than 3.
     /// - Function panics if the actual resulting size of the grid does not match the expected end size
     /// (which means something probably went horribly wrong or was horribly coded)
-
     pub fn resize<P: Into<(usize, usize)>>(&mut self, size: P) {
         let (width, height) = size.into();
         if self.width != width {
@@ -1471,12 +1472,12 @@ impl MapGrid {
         self.to_strings_with('#', '.')
     }
 
-    // Gets a string representation of the grid with the default on and off characters
-    // (`'#'` and `'.'` respectively).
-    // pub fn to_string(&self) -> String {
-    //     trace!("MapGrid::to_string()");
-    //     self.to_string_with('#', '.', '\n')
-    // }
+    /// Gets a string representation of the grid with the default on and off characters
+    /// (`'#'` and `'.'` respectively).
+    #[must_use]
+    pub fn as_string(&self) -> String {
+        self.to_strings().join("\n")
+    }
 }
 
 /// Serialization and Deserialization implementations.

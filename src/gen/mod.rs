@@ -9,4 +9,4 @@ pub mod rooms;
 /// `RoomBasedGen` Module
 /// 
 /// Contains the [`crate::gen::RoomBasedGenerator`].
-pub mod room_gen;
+pub mod room_based;

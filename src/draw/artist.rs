@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use tiny_skia::{Color, Paint, Pixmap, Rect, Transform};
 
-use crate::{data::grid::MapGrid, util::tri::TriState};
+use crate::{data::MapGrid, util::TriState};
 
 lazy_static! {
     /// ### Const reference to the color white.
@@ -83,7 +83,7 @@ impl Artist {
     /// - Function panics if the current size of the grid is too big to fit into a u32, necessary for the `tiny_skia` library.
     /// 
     /// ### Example(s)
-    #[allow(clippy::cast_precision_loss, unused_variables)]
+    #[allow(clippy::cast_precision_loss, clippy::similar_names, unused_variables)]
     pub fn draw_mapgrid<S: std::fmt::Display>(
         grid: &MapGrid,
         file_name: S,

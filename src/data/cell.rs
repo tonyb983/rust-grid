@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::util::tri::TriState;
+use crate::util::TriState;
 
 /// A simple cell that can be either `on` or `off`. Uses a simple bool for internal state.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[derive(Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct BasicCell(bool);
 
 impl BasicCell {
@@ -67,6 +68,7 @@ impl Default for BasicCell {
 /// A simple cell that can be either `on`, `off`, or `invalid`. Uses [`TriState`] for the internal state.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[derive(Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct TriCell(TriState);
 
 impl TriCell {

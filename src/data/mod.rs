@@ -2,7 +2,7 @@
 /// 
 /// Contains the definition and implementation of the [`crate::data::Cell`] type, representing a single cell
 /// inside of a [`crate::data::MapGrid`] whose state is determined by a [`crate::util::tri::TriState`].
-pub mod cell;
+mod cell;
 
 /// ## `MapGrid` Module
 /// This module contains the implementation of [`crate::data::grid::MapGrid`].
@@ -48,17 +48,22 @@ pub mod cell;
 ///
 /// assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#.#.#\n#...#\n#####\n");
 /// ```
-pub mod grid;
+mod grid;
 
 /// ## `Premade` Module
 /// This module contains several premade maps, useful for debugging and testing different implementations and algorithms.
-pub mod premade;
+mod premade;
 
 /// ## `Types` Module
 /// This module contains the common data types used throughout this library. Most (or all) types here are re-exported
 /// by the parent module, [`crate::data`].
-pub mod types;
+mod types;
 
-pub use self::cell::TriCell as Cell;
+pub use cell::TriCell as Cell;
 pub use self::grid::{GridIterator, MapGrid};
+pub use premade::{
+    Grids as PremadeGrids,
+    GridFiles as PremadeGridFiles,
+    GridStrings as PremadeGridStrings,
+};
 pub use types::{AsPos, pos, size, square, GridIndex, GridPos, GridSize, GridSquare};

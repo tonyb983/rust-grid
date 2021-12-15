@@ -1,18 +1,24 @@
 use std::borrow::Borrow;
 
-use crate::{pipe::{pipeline::{Pipeline, PipelineOutput, PipelineResult}, error::PipelineError}, data::MapGrid};
+use crate::{
+    data::MapGrid,
+    pipe::{
+        error::Error,
+        pipeline::{Output, Pipeline},
+        PipelineResult,
+    },
+};
 
 /// TODO: Is this still a thing or am I scraping this?
 #[allow(dead_code)]
 
-pub struct PipelineRunner<'a>(Pipeline<'a>);
+pub struct Runner<'a>(Pipeline<'a>);
 
-impl<'a> PipelineRunner<'a> {
+impl<'a> Runner<'a> {
     pub fn run(original: &MapGrid) -> PipelineResult {
         let mut pipeline = Pipeline::new();
         if pipeline.is_empty() {
-            Err(PipelineError::NoSteps)
-
+            Err(Error::NoSteps)
         } else {
             pipeline.run(original)
         }

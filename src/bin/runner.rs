@@ -1,15 +1,14 @@
 //! # Dungen
-//! 
+//!
 //! My experimentation with all things procedurally generated, pathfinding, 2D grid / matrix operations, etc.
-//! 
+//!
 //! Eventual goal is to have a library that creates "dungeons" for "games", whatever those
 //! words mean to me at the moment.
 
 #![feature(let_else, slice_group_by)]
 
 use std::{
-    char,
-    env,
+    char, env,
     ops::Sub,
     time::{Duration, Instant},
 };
@@ -19,16 +18,16 @@ use pathfinding::prelude as pflib;
 
 use dungen::{
     data::{
-        grid::MapGrid,
-        premade::{GridFiles, GridStrings, PremadeGrids},
-        size, GridPos,
+        size, GridPos, MapGrid, PremadeGridFiles as GridFiles, PremadeGridStrings as GridStrings,
+        PremadeGrids,
     },
     draw::artist::Artist,
     gen::{
         cell_auto::{Algorithm as CaAlgorithm, CellularAutomata},
-        room_gen::RoomBasedGen,
+        room_based::RoomBased,
     },
-    util::{math::get_curve_between, random::init_rng}, pf::pathing::Pathfinding,
+    pf::pathing::Pathfinding,
+    util::{math::get_curve_between, random::init_rng},
 };
 
 const FUNCTION: usize = 20usize;
@@ -45,7 +44,7 @@ fn main() {
                 println!("Error parsing input: {}", err);
 
                 FUNCTION
-            },
+            }
         }
     };
 
@@ -100,7 +99,9 @@ fn compare_algorithms_internal() {
         println!("Processing {:?}", string);
 
         let grid = string.get_maze().expect("Could not get maze from string");
-        let (start, goal) = string.get_start_end().expect("Unable to get start and goal.");
+        let (start, goal) = string
+            .get_start_end()
+            .expect("Unable to get start and goal.");
 
         println!("Running dijkstra");
         let (path, time) = timed_result(|| {
@@ -110,23 +111,20 @@ fn compare_algorithms_internal() {
         results.push((format!("{:?}", &string), "dijkstra", time, path));
 
         println!("Running astar");
-        let (path, time) = timed_result(|| {
-            Pathfinding::a_star(&grid, start, goal).expect("Unable to find path!")
-        });
+        let (path, time) =
+            timed_result(|| Pathfinding::a_star(&grid, start, goal).expect("Unable to find path!"));
 
         results.push((format!("{:?}", &string), "astar", time, path));
 
         println!("Running bfs");
-        let (path, time) = timed_result(|| {
-            Pathfinding::bfs(&grid, start, goal).expect("Unable to find path!")
-        });
+        let (path, time) =
+            timed_result(|| Pathfinding::bfs(&grid, start, goal).expect("Unable to find path!"));
 
         results.push((format!("{:?}", &string), "bfs", time, path));
 
         println!("Running fringe");
-        let (path, time) = timed_result(|| {
-            Pathfinding::fringe(&grid, start, goal).expect("Unable to find path!")
-        });
+        let (path, time) =
+            timed_result(|| Pathfinding::fringe(&grid, start, goal).expect("Unable to find path!"));
 
         results.push((format!("{:?}", &string), "fringe", time, path));
     }
@@ -394,7 +392,7 @@ fn json_serial_test() {
 }
 
 fn curve_and_cell_auto_test() {
-    let map = MapGrid::reverse(&RoomBasedGen::tiered_heuristic(size(
+    let map = MapGrid::reverse(&RoomBased::tiered_heuristic(size(
         fastrand::usize(75..=160),
         fastrand::usize(20..=37),
     )));
@@ -486,14 +484,14 @@ fn generate_various_sizes() {
 }
 
 fn basic_room_generator() {
-    let grid = RoomBasedGen::basic((60, 30).into());
+    let grid = RoomBased::basic((60, 30).into());
     println!("Created grid:\n{}", grid);
 }
 
 fn tiered_room_generator() {
     let x = fastrand::usize(50..=100);
     let y = fastrand::usize(40..=70);
-    let grid = RoomBasedGen::tiered((x, y).into());
+    let grid = RoomBased::tiered((x, y).into());
     println!("Created {:?} Grid:\n{}", (x, y), grid);
 }
 

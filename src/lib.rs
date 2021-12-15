@@ -35,11 +35,11 @@
 // - `clippy::module_name_repititions` - This is maybe something I can be better about but for now it's okay in my book.
 // - `clippy::semicolon_if_nothing_returned` - This interferes with the `let_else` feature syntax.
 // - `clippy::similar_names` - This interferes with functions that use a lot of intermediate variables (usually for debugging).
-#![allow(
-    clippy::module_name_repetitions,
-    clippy::semicolon_if_nothing_returned,
-    clippy::similar_names
-)]
+// #![allow(
+//     clippy::module_name_repetitions,
+//     clippy::semicolon_if_nothing_returned,
+//     clippy::similar_names
+// )]
 
 /// ## `Data` Module
 /// The main data types for the library.
@@ -80,6 +80,6 @@ pub mod util;
 /// ## `Logging` Module
 /// This crate (at least for now) simply re-exports the `log` crate.
 #[allow(unused_imports)]
-pub(crate) mod logging {
+crate mod logging {
     pub(crate) use log::{debug, error, info, trace, warn};
 }

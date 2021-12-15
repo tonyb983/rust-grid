@@ -1,4 +1,4 @@
-use crate::util::tri::TriState;
+use crate::util::TriState;
 
 
 /// Contains a single change to a [`MapGrid`][`crate::data::MapGrid`].
@@ -11,13 +11,22 @@ pub struct GridChange {
 }
 
 /// A list of [`GridChange`]s.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Changelist(Vec<GridChange>);
 
 impl Changelist {
     /// Create a new empty [`Changelist`].
     pub fn new() -> Self {
-        Changelist(Vec::new())
+        Self::default()
+    }
+
+    pub fn from_changes(changes: impl Iterator<Item = GridChange>) -> Self {
+        let mut new = Self::default();
+        for change in changes {
+            new.add_change(change);
+        }
+
+        new
     }
 
     /// Add a [`GridChange`] to the [`Changelist`].

@@ -57,7 +57,8 @@ pub mod random;
 /// let has_a_3 = TriState::from(vec![1, 2, 4, 5].contains(&3));
 /// println!("Has a 3: {}", has_a_3); // prints "Has a 3: False"
 /// ```
-pub mod tri;
+mod tri;
+pub use tri::TriState;
 
 /// ## `Testing` Utility Module
 /// Contains various utilities for testing.

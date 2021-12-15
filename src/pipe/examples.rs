@@ -3,10 +3,10 @@ use crate::{
     pipe::{
         changes::{Changelist, GridChange},
         context::Context,
-        error::PipelineError,
-        pipeline::{PipelineStep, StepResult},
+        error::Error,
+        pipeline::{Step, StepOutput},
     },
-    util::tri::TriState,
+    util::TriState,
 };
 
 struct SetOutEdgeStep {
@@ -19,8 +19,8 @@ impl SetOutEdgeStep {
     }
 }
 
-impl PipelineStep for SetOutEdgeStep {
-    fn run(&mut self, _ctx: &Context, current: &MapGrid) -> Result<StepResult, PipelineError> {
+impl Step for SetOutEdgeStep {
+    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
         let (size_x, size_y) = output.size().into();
@@ -49,14 +49,14 @@ impl PipelineStep for SetOutEdgeStep {
             }
         }
 
-        Ok(StepResult { output, changes })
+        Ok(StepOutput { output, changes })
     }
 }
 
 struct ReverseEntireGridStep;
 
-impl PipelineStep for ReverseEntireGridStep {
-    fn run(&mut self, _ctx: &Context, current: &MapGrid) -> Result<StepResult, PipelineError> {
+impl Step for ReverseEntireGridStep {
+    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
@@ -72,7 +72,7 @@ impl PipelineStep for ReverseEntireGridStep {
             changes.add_change(change);
         }
 
-        Ok(StepResult { output, changes })
+        Ok(StepOutput { output, changes })
     }
 }
 
@@ -85,8 +85,8 @@ impl SetEntireRowStep {
     pub fn new(row: usize, state: TriState) -> Self { Self { row, state } }
 }
 
-impl PipelineStep for SetEntireRowStep {
-    fn run(&mut self, _ctx: &Context, current: &MapGrid) -> Result<StepResult, PipelineError> {
+impl Step for SetEntireRowStep {
+    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
@@ -104,7 +104,7 @@ impl PipelineStep for SetEntireRowStep {
             changes.add_change(change);
         }
 
-        Ok(StepResult { output, changes })
+        Ok(StepOutput { output, changes })
     }
 }
 
@@ -117,8 +117,8 @@ impl SetEntireColumnStep {
     pub fn new(column: usize, state: TriState) -> Self { Self { column, state } }
 }
 
-impl PipelineStep for SetEntireColumnStep {
-    fn run(&mut self, _ctx: &Context, current: &MapGrid) -> Result<StepResult, PipelineError> {
+impl Step for SetEntireColumnStep {
+    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
@@ -136,7 +136,7 @@ impl PipelineStep for SetEntireColumnStep {
             changes.add_change(change);
         }
 
-        Ok(StepResult { output, changes })
+        Ok(StepOutput { output, changes })
     }
 }
 

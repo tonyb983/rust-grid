@@ -296,9 +296,9 @@ impl From<usize> for GridClassification {
 }
 
 /// Static struct holding room based generation methods.
-pub struct RoomBasedGen;
+pub struct RoomBased;
 
-impl RoomBasedGen {
+impl RoomBased {
     /// "Basic" Room Based Generator
     #[must_use] 
     pub fn basic(size: GridSize) -> MapGrid {

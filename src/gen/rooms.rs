@@ -45,6 +45,7 @@ impl Room {
 
     /// Creates a new [`Room`] within the ranges provided.
     #[must_use] 
+    #[allow(clippy::similar_names)]
     pub fn random(
         start_x_range: Range<usize>,
         start_y_range: Range<usize>,
