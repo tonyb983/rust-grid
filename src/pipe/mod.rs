@@ -18,10 +18,7 @@ pub use crate::pipe::{
     context::Context as PipelineContext,
     error::Error as PipelineError,
     pipeline::{
-        Output as PipelineOutput,
-        Pipeline,
-        Step as PipelineStep, 
-        StepOutput as PipelineStepOutput
+        Output as PipelineOutput, Pipeline, Step as PipelineStep, StepOutput as PipelineStepOutput,
     },
 };
 

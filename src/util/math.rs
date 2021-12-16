@@ -89,9 +89,9 @@ pub fn bresenham_line<P1: Into<(usize, usize)>, P2: Into<(usize, usize)>>(
 }
 
 /// Calculates a curved line between two points.
-/// 
+///
 /// This uses a coin-flip to determine if the middle point is (first.x, second.y) or (second.x, first.y).
-/// 
+///
 /// TODO: Currently this algorithm uses 1000 steps and then dedups the resulting point array, but it can probably be done better by calculating the distance between the two points and using a calculation from that value to determine the maximum steps, so that two points that are adjacent don't use the same number of steps as two points that are 1000 units apart.
 #[allow(
     clippy::cast_precision_loss,

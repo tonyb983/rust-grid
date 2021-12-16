@@ -2,7 +2,9 @@ use crate::logging::trace;
 
 fn get_random_seed() -> u64 {
     trace!("get_random_seed");
-    let elapsed = std::time::SystemTime::UNIX_EPOCH.elapsed().expect("get_random_seed - Could not get elapsed time from UNIX EPOCH");
+    let elapsed = std::time::SystemTime::UNIX_EPOCH
+        .elapsed()
+        .expect("get_random_seed - Could not get elapsed time from UNIX EPOCH");
     let nanos = elapsed.as_nanos();
     match u64::try_from(nanos) {
         Ok(seed) => seed,
@@ -15,7 +17,7 @@ fn get_random_seed() -> u64 {
 
 /// ## [`init_rng()`]
 /// Initializes the [`fastrand`] RNG with a *"random"-ish* seed determined by the current time.
-/// 
+///
 /// ## Panics
 /// This function will panic if the system clock cannot be read.
 pub fn init_rng() {

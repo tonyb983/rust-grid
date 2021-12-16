@@ -63,7 +63,7 @@ crate fn run_tests(setup: fn(), teardown: fn(), tests: Vec<fn()>) {
     for result in results {
         assert!(result.is_ok());
     }
-} 
+}
 
 #[allow(dead_code)]
 crate struct TestUnit {

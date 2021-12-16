@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 /// Specifies a 3 state Boolean value.
-/// 
+///
 /// ### Variants
 /// - `True` - The `on` or `true` state.
 /// - `False` - The `off` or `false` state.
 /// - `Invalid` - The `invalid` state.
-/// 
+///
 /// ### Traits
 /// The following traits are implemented for [`TriState`]:
 /// - [`From`]
@@ -21,8 +21,7 @@ use serde::{Deserialize, Serialize};
 /// - [`serde::Deserialize`] and [`serde::Serialize`]
 /// - Auto-Traits:
 ///    - [`Debug`], [`PartialEq`], [`Eq`], [`Clone`], [`Copy`], [`Hash`], [`PartialOrd`], [`Ord`]
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub enum TriState {
     /// True.
@@ -35,25 +34,25 @@ pub enum TriState {
 
 impl TriState {
     /// Create a [`TriState::True`].
-    #[must_use] 
+    #[must_use]
     pub fn on() -> Self {
         TriState::True
     }
 
     /// Create a [`TriState::False`].
-    #[must_use] 
+    #[must_use]
     pub fn off() -> Self {
         TriState::False
     }
 
     /// Create a [`TriState::Invalid`].
-    #[must_use] 
+    #[must_use]
     pub fn invalid() -> Self {
         TriState::Invalid
     }
 
     /// Returns the opposite of the current *boolean* value. [`TriState::Invalid`] remains unchanged.
-    #[must_use] 
+    #[must_use]
     pub fn toggle(self) -> Self {
         match self {
             Self::True => Self::False,
@@ -63,13 +62,13 @@ impl TriState {
     }
 
     /// Returns true if this [`TriState`] is [`TriState::True`] or [`TriState::False`].
-    #[must_use] 
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self != TriState::Invalid
     }
 
     /// Safely creates a bool from a [`TriState`] without panicking, converting `Invalid` to `false`.
-    #[must_use] 
+    #[must_use]
     pub fn safe_bool(self) -> bool {
         self == TriState::True
     }
@@ -361,10 +360,13 @@ mod tests {
         assert_eq!(TriState::False.bitand(TriState::True), TriState::False);
         assert_eq!(TriState::False.bitand(TriState::False), TriState::False);
         assert_eq!(TriState::False.bitand(TriState::Invalid), TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid.bitand(TriState::True), TriState::Invalid);
         assert_eq!(TriState::Invalid.bitand(TriState::False), TriState::Invalid);
-        assert_eq!(TriState::Invalid.bitand(TriState::Invalid), TriState::Invalid);
+        assert_eq!(
+            TriState::Invalid.bitand(TriState::Invalid),
+            TriState::Invalid
+        );
 
         assert_eq!(TriState::True & TriState::True, TriState::True);
         assert_eq!(TriState::True & TriState::False, TriState::False);
@@ -373,7 +375,7 @@ mod tests {
         assert_eq!(TriState::False & TriState::True, TriState::False);
         assert_eq!(TriState::False & TriState::False, TriState::False);
         assert_eq!(TriState::False & TriState::Invalid, TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid & TriState::True, TriState::Invalid);
         assert_eq!(TriState::Invalid & TriState::False, TriState::Invalid);
         assert_eq!(TriState::Invalid & TriState::Invalid, TriState::Invalid);
@@ -390,10 +392,13 @@ mod tests {
         assert_eq!(TriState::False.bitor(TriState::True), TriState::True);
         assert_eq!(TriState::False.bitor(TriState::False), TriState::False);
         assert_eq!(TriState::False.bitor(TriState::Invalid), TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid.bitor(TriState::True), TriState::Invalid);
         assert_eq!(TriState::Invalid.bitor(TriState::False), TriState::Invalid);
-        assert_eq!(TriState::Invalid.bitor(TriState::Invalid), TriState::Invalid);
+        assert_eq!(
+            TriState::Invalid.bitor(TriState::Invalid),
+            TriState::Invalid
+        );
 
         assert_eq!(TriState::True | TriState::True, TriState::True);
         assert_eq!(TriState::True | TriState::False, TriState::True);
@@ -402,7 +407,7 @@ mod tests {
         assert_eq!(TriState::False | TriState::True, TriState::True);
         assert_eq!(TriState::False | TriState::False, TriState::False);
         assert_eq!(TriState::False | TriState::Invalid, TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid | TriState::True, TriState::Invalid);
         assert_eq!(TriState::Invalid | TriState::False, TriState::Invalid);
         assert_eq!(TriState::Invalid | TriState::Invalid, TriState::Invalid);
@@ -419,10 +424,13 @@ mod tests {
         assert_eq!(TriState::False.bitxor(TriState::True), TriState::True);
         assert_eq!(TriState::False.bitxor(TriState::False), TriState::False);
         assert_eq!(TriState::False.bitxor(TriState::Invalid), TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid.bitxor(TriState::True), TriState::Invalid);
         assert_eq!(TriState::Invalid.bitxor(TriState::False), TriState::Invalid);
-        assert_eq!(TriState::Invalid.bitxor(TriState::Invalid), TriState::Invalid);
+        assert_eq!(
+            TriState::Invalid.bitxor(TriState::Invalid),
+            TriState::Invalid
+        );
 
         assert_eq!(TriState::True ^ TriState::True, TriState::False);
         assert_eq!(TriState::True ^ TriState::False, TriState::True);
@@ -431,7 +439,7 @@ mod tests {
         assert_eq!(TriState::False ^ TriState::True, TriState::True);
         assert_eq!(TriState::False ^ TriState::False, TriState::False);
         assert_eq!(TriState::False ^ TriState::Invalid, TriState::Invalid);
-        
+
         assert_eq!(TriState::Invalid ^ TriState::True, TriState::Invalid);
         assert_eq!(TriState::Invalid ^ TriState::False, TriState::Invalid);
         assert_eq!(TriState::Invalid ^ TriState::Invalid, TriState::Invalid);

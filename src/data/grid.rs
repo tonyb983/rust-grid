@@ -1024,7 +1024,10 @@ impl MapGrid {
 
     /// Gets the coordinates of the neighbors to the given cell, truncating edges.
     #[must_use]
-    pub fn neighbor_positions<P: Into<(usize,usize)>>(&self, target_pos: P) -> Vec<(usize, usize)> {
+    pub fn neighbor_positions<P: Into<(usize, usize)>>(
+        &self,
+        target_pos: P,
+    ) -> Vec<(usize, usize)> {
         let pos = target_pos.into();
         trace!("MapGrid::neighbor_positions(pos = {:?})", pos);
         let xs: Vec<usize> = if pos.0 == 0 {
@@ -1059,7 +1062,10 @@ impl MapGrid {
 
     /// Gets the coordinates of the neighbors to the given cell, wrapping on edges.
     #[must_use]
-    pub fn neighbor_positions_wrapping<P: Into<(usize,usize)>>(&self, target_pos: P) -> Vec<(usize, usize)> {
+    pub fn neighbor_positions_wrapping<P: Into<(usize, usize)>>(
+        &self,
+        target_pos: P,
+    ) -> Vec<(usize, usize)> {
         let pos = target_pos.into();
         trace!("MapGrid::get_neighbor_positions({:?})", pos);
         info!(
@@ -1101,7 +1107,7 @@ impl MapGrid {
     /// Gets all neighbors of the given position whose state matches `state`. If `wrap_edges` is true,
     /// neighbors will be considered by wrapping first and last rows and columns.
     #[must_use]
-    pub fn neighbors_with_state<P: Into<(usize,usize)>>(
+    pub fn neighbors_with_state<P: Into<(usize, usize)>>(
         &self,
         target_pos: P,
         state: bool,

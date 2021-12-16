@@ -1,4 +1,4 @@
-use std::{time::Instant, collections::HashMap};
+use std::{collections::HashMap, time::Instant};
 
 use crate::data::MapGrid;
 

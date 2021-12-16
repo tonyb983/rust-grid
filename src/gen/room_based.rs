@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    ops::Range,
-};
+use std::{collections::HashMap, ops::Range};
 
 use crate::{
     data::{GridPos, GridSize, MapGrid},
@@ -48,7 +45,7 @@ impl From<GridClassification> for usize {
 }
 
 /// Probably need to clean this up.
-/// 
+///
 /// TODO: Clean this up.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ClassificationResult {
@@ -101,7 +98,7 @@ impl ClassificationResult {
 
 impl GridClassification {
     /// Classify a number of rows.
-    #[must_use] 
+    #[must_use]
     pub fn classify_rows(rows: usize) -> Self {
         match rows {
             3 | 4 => Self::TooSmall,
@@ -116,7 +113,7 @@ impl GridClassification {
     }
 
     /// Gets the range of number that this classification is valid for.
-    #[must_use] 
+    #[must_use]
     pub fn row_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..5,
@@ -131,7 +128,7 @@ impl GridClassification {
     }
 
     /// Get the maximum number of rows in this classification.
-    #[must_use] 
+    #[must_use]
     pub fn row_max(self) -> usize {
         match self {
             Self::TooSmall => 5,
@@ -146,7 +143,7 @@ impl GridClassification {
     }
 
     /// Get the minimum number of rows in this classification.
-    #[must_use] 
+    #[must_use]
     pub fn row_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -161,7 +158,7 @@ impl GridClassification {
     }
 
     /// Classify the number of columns given.
-    #[must_use] 
+    #[must_use]
     pub fn classify_cols(cols: usize) -> Self {
         match cols {
             3..=8 => Self::TooSmall,
@@ -176,7 +173,7 @@ impl GridClassification {
     }
 
     /// Get the range for which this classification is valid.
-    #[must_use] 
+    #[must_use]
     pub fn col_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..9,
@@ -191,7 +188,7 @@ impl GridClassification {
     }
 
     /// The maxmimum number of columns this classification is valid for.
-    #[must_use] 
+    #[must_use]
     pub fn col_max(self) -> usize {
         match self {
             Self::TooSmall => 9,
@@ -206,7 +203,7 @@ impl GridClassification {
     }
 
     /// The minimum number of columns this classification is valid for.
-    #[must_use] 
+    #[must_use]
     pub fn col_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -221,7 +218,7 @@ impl GridClassification {
     }
 
     /// Classify the number of cells given.
-    #[must_use] 
+    #[must_use]
     pub fn classify_cells(cells: usize) -> Self {
         match cells {
             3..=44 => Self::TooSmall,
@@ -235,7 +232,7 @@ impl GridClassification {
     }
 
     /// Get the range of number which makes up this classification.
-    #[must_use] 
+    #[must_use]
     pub fn cell_range(self) -> Range<usize> {
         match self {
             Self::TooSmall => 3..45,
@@ -250,7 +247,7 @@ impl GridClassification {
     }
 
     /// Get the maximum number of cells this classification is valid for.
-    #[must_use] 
+    #[must_use]
     pub fn cell_min(self) -> usize {
         match self {
             Self::TooSmall => 3,
@@ -265,7 +262,7 @@ impl GridClassification {
     }
 
     /// Get the minimum number of cells this classification is valid for.
-    #[must_use] 
+    #[must_use]
     pub fn cell_max(self) -> usize {
         match self {
             Self::TooSmall => 45,
@@ -301,7 +298,7 @@ pub struct RoomBased;
 /// Impl block for public functions.
 impl RoomBased {
     /// "Basic" Room Based Generator
-    #[must_use] 
+    #[must_use]
     pub fn basic(size: GridSize) -> MapGrid {
         trace!("RoomGen::basic({:?})", size);
         let (map_width, map_height) = size.into();
@@ -368,11 +365,11 @@ impl RoomBased {
     }
 
     /// "Tiered" Room Based Generator
-    /// 
+    ///
     /// ### Panics
     /// - Function panics if it takes more than 10000 total iterations to generate the map.
     #[allow(clippy::too_many_lines)]
-    #[must_use] 
+    #[must_use]
     pub fn tiered(size: GridSize) -> MapGrid {
         trace!("RoomGen::tiered({:?})", size);
         let (map_width, map_height) = size.into();
@@ -603,7 +600,7 @@ impl RoomBased {
     }
 
     /// "Tiered" "Heuristic" Room Based Generator
-    /// 
+    ///
     /// ### Panics
     /// - Function panics if it takes more than 10000 total iterations to generate the map.
     #[allow(
@@ -612,7 +609,7 @@ impl RoomBased {
         clippy::too_many_lines,
         clippy::cast_possible_truncation
     )]
-    #[must_use] 
+    #[must_use]
     pub fn tiered_heuristic(size: GridSize) -> MapGrid {
         struct RoomDims {
             count: Range<usize>,
@@ -658,23 +655,35 @@ impl RoomBased {
         let huge_room_target = fastrand::usize(ranges.get(&RoomSize::Huge).unwrap().count.clone());
         let huge_room_pos = ranges.get(&RoomSize::Huge).unwrap().pos.clone();
         let huge_room_size = ranges.get(&RoomSize::Huge).unwrap().size.clone();
-        warn!("huge_room target = {} pos = {:?} size = {:?}", huge_room_target, huge_room_pos, huge_room_size);
+        warn!(
+            "huge_room target = {} pos = {:?} size = {:?}",
+            huge_room_target, huge_room_pos, huge_room_size
+        );
 
         let big_room_target = fastrand::usize(ranges.get(&RoomSize::Big).unwrap().count.clone());
         let big_room_pos = ranges.get(&RoomSize::Big).unwrap().pos.clone();
         let big_room_size = ranges.get(&RoomSize::Big).unwrap().size.clone();
-        warn!("big_room target = {} pos = {:?} size = {:?}", big_room_target, big_room_pos, big_room_size);
+        warn!(
+            "big_room target = {} pos = {:?} size = {:?}",
+            big_room_target, big_room_pos, big_room_size
+        );
 
         let mid_room_target = fastrand::usize(ranges.get(&RoomSize::Medium).unwrap().count.clone());
         let mid_room_pos = ranges.get(&RoomSize::Medium).unwrap().pos.clone();
         let mid_room_size = ranges.get(&RoomSize::Medium).unwrap().size.clone();
-        warn!("mid_room target = {} pos = {:?} size = {:?}", mid_room_target, mid_room_pos, mid_room_size);
+        warn!(
+            "mid_room target = {} pos = {:?} size = {:?}",
+            mid_room_target, mid_room_pos, mid_room_size
+        );
 
         let small_room_target =
             fastrand::usize(ranges.get(&RoomSize::Small).unwrap().count.clone());
         let small_room_pos = ranges.get(&RoomSize::Small).unwrap().pos.clone();
         let small_room_size = ranges.get(&RoomSize::Small).unwrap().size.clone();
-        warn!("small_room target = {} pos = {:?} size = {:?}", small_room_target, small_room_pos, small_room_size);
+        warn!(
+            "small_room target = {} pos = {:?} size = {:?}",
+            small_room_target, small_room_pos, small_room_size
+        );
 
         let (mut total, mut iters) = (0usize, 0usize);
         'huge_room_iter: while rooms.len() < huge_room_target {

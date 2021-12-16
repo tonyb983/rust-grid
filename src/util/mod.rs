@@ -1,13 +1,13 @@
 /// ## `Math` Utility Module.
 /// Contains various math utility functions.
-/// 
+///
 /// #### See [`bresenham_line`](`crate::util::math::bresenham_line`), [`get_curve_between`](`crate::util::math::get_curve_between`), etc.
 pub mod math;
 
 /// ## `Random` Utility Module
 /// Contains functions for initializing and generating random numbers. Intent is to have this serve
-/// as an interface for whatever random library is being used. Currently this is `fastrand`. 
-/// 
+/// as an interface for whatever random library is being used. Currently this is `fastrand`.
+///
 /// TODO:
 /// Still need to write individual functions for each random number generator, raw `fastrand` calls are
 /// currently still being used.
@@ -60,9 +60,9 @@ pub mod random;
 mod tri;
 pub use tri::TriState;
 
+#[cfg(test)]
+pub mod test_framework;
 /// ## `Testing` Utility Module
 /// Contains various utilities for testing.
 #[cfg(test)]
 pub mod testing;
-#[cfg(test)]
-pub mod test_framework;

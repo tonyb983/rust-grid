@@ -67,21 +67,21 @@ pub struct Artist;
 
 impl Artist {
     /// Draws a [`MapGrid`](`crate::data::MapGrid`) to a png file.
-    /// 
+    ///
     /// ### Arguments
     /// - `grid` - The [`MapGrid`](`crate::data::MapGrid`) to draw.
     /// - `file_name` - The name of the output file. This name will be prefixed with `output/` and suffixed with `.png`.
     /// - `block_size` - The size of each block in the grid, default would be 50.
     /// - `fg_color` - The color of the "foreground" aka any blocks that are `on`. This parameter is currently unused, using default colors isntead.
     /// - `bg_color` - The color of the "background" aka any blocks that are `off`. This parameter is currently unused, using default colors isntead.
-    /// 
+    ///
     /// ### Errors
     /// - Function errors if the [`PixMap`](`tiny_skia::pixmap::PixMap`) cannot be created.
     /// - Function errors if the png cannot be saved.
-    /// 
+    ///
     /// ### Panics
     /// - Function panics if the current size of the grid is too big to fit into a u32, necessary for the `tiny_skia` library.
-    /// 
+    ///
     /// ### Example(s)
     #[allow(clippy::cast_precision_loss, clippy::similar_names, unused_variables)]
     pub fn draw_mapgrid<S: std::fmt::Display>(
@@ -133,24 +133,21 @@ impl Artist {
 
     /// Calls [`draw_mapgrid`](`crate::draw::artist::Artist::draw_mapgrid`) with default values, drawing the
     /// [`MapGrid`](`crate::data::MapGrid`) to a png file.
-    /// 
+    ///
     /// ### Arguments
     /// - `grid` - The [`MapGrid`](`crate::data::MapGrid`) to draw.
     /// - `file_name` - The name of the output file. This name will be prefixed with `output/` and suffixed with `.png`.
-    /// 
+    ///
     /// ### Errors
     /// - Function errors if the [`PixMap`](`tiny_skia::pixmap::PixMap`) cannot be created.
     /// - Function errors if the png cannot be saved.
-    /// 
+    ///
     /// ### Panics
     /// - Function panics if the current size of the grid is too big to fit into a u32, necessary for the `tiny_skia` library.
-    pub fn draw_mapgrid_default<S: std::fmt::Display>(grid: &MapGrid, out_file: S) -> Result<(), String> {
-        Artist::draw_mapgrid(
-            grid,
-            out_file,
-            50,
-            (255, 255, 255, 255),
-            (0, 0, 0, 255),
-        )
+    pub fn draw_mapgrid_default<S: std::fmt::Display>(
+        grid: &MapGrid,
+        out_file: S,
+    ) -> Result<(), String> {
+        Artist::draw_mapgrid(grid, out_file, 50, (255, 255, 255, 255), (0, 0, 0, 255))
     }
 }

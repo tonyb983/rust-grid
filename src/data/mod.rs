@@ -1,5 +1,5 @@
 /// ## `Cell` Module
-/// 
+///
 /// Contains the definition and implementation of the [`crate::data::Cell`] type, representing a single cell
 /// inside of a [`crate::data::MapGrid`] whose state is determined by a [`crate::util::tri::TriState`].
 mod cell;
@@ -59,11 +59,9 @@ mod premade;
 /// by the parent module, [`crate::data`].
 mod types;
 
-pub use cell::TriCell as Cell;
 pub use self::grid::{GridIterator, MapGrid};
+pub use cell::TriCell as Cell;
 pub use premade::{
-    Grids as PremadeGrids,
-    GridFiles as PremadeGridFiles,
-    GridStrings as PremadeGridStrings,
+    GridFiles as PremadeGridFiles, GridStrings as PremadeGridStrings, Grids as PremadeGrids,
 };
-pub use types::{AsPos, pos, size, square, GridIndex, GridPos, GridSize, GridSquare};
+pub use types::{pos, size, square, AsPos, GridIndex, GridPos, GridSize, GridSquare};

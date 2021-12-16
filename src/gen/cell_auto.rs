@@ -35,13 +35,13 @@ pub enum Algorithm {
     /// The flexible version arguments. See [`FlexArgs`].
     Flex(FlexArgs),
     /// The second version arguments. See [`Flex2Args`].
-    Flex2(Flex2Args)
+    Flex2(Flex2Args),
 }
 
 impl Algorithm {
     /// The default version of the basic cellular automata algorithm. Uses 4 as the minimum to turn a
     /// cell on if it is already on, and 5 to turn it on if it is not on.
-    #[must_use] 
+    #[must_use]
     pub fn default_first() -> Self {
         Algorithm::First(FirstAlgArgs {
             on_min: 4,
@@ -50,19 +50,19 @@ impl Algorithm {
     }
 
     /// Use the basic algorithm with the given on and off minimums.
-    #[must_use] 
+    #[must_use]
     pub fn first(on_min: usize, off_min: usize) -> Self {
         Self::First(FirstAlgArgs { on_min, off_min })
     }
 
     /// Create a flexible version of the algorithm that uses the provided predicate.
-    #[must_use] 
+    #[must_use]
     pub fn flex(predicate: fn((usize, usize), usize, bool) -> bool) -> Self {
         Self::Flex(FlexArgs { predicate })
     }
 
     /// Create a flexible (second) version of the algorithm that uses the provided predicate.
-    #[must_use] 
+    #[must_use]
     pub fn flex2(predicate: fn((usize, usize), usize, usize, bool) -> bool) -> Self {
         Self::Flex2(Flex2Args { predicate })
     }
@@ -73,7 +73,7 @@ pub struct CellularAutomata;
 
 impl CellularAutomata {
     /// Executes the indicated algorithm on the provided map for the given number of passes.
-    #[must_use] 
+    #[must_use]
     pub fn execute_on(original: &MapGrid, passes: usize, alg_args: Algorithm) -> MapGrid {
         trace!(
             "CellularAutomata::execute_on(Grid,{}, {:?})",
@@ -92,7 +92,7 @@ impl CellularAutomata {
 
     /// Executes the first cellular automata method, returning the final product
     /// as well as a list of intermediate products.
-    #[must_use] 
+    #[must_use]
     pub fn execute_with_history(
         original: &MapGrid,
         passes: usize,
@@ -114,7 +114,7 @@ impl CellularAutomata {
     /// automata method on it [`passes`] times.
     ///
     /// ### Return value is (<OriginalGrid>, <FinalGrid>).
-    #[must_use] 
+    #[must_use]
     pub fn create_and_run(
         size: (usize, usize),
         passes: usize,
@@ -130,9 +130,7 @@ impl CellularAutomata {
         let original = MapGrid::random_fill_percent(size, 0.45);
 
         let (last, history) = match alg_args {
-            Algorithm::First(ffa) => {
-                Self::first(&original, passes, false, ffa.on_min, ffa.off_min)
-            },
+            Algorithm::First(ffa) => Self::first(&original, passes, false, ffa.on_min, ffa.off_min),
             Algorithm::Flex(f) => Self::flexible(&original, passes, false, f.predicate),
             Algorithm::Flex2(f2) => Self::flexible2(&original, passes, false, f2.predicate),
         };

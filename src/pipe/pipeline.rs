@@ -32,7 +32,11 @@ pub trait Step {
     ///
     /// ### Errors
     /// - Function can choose to return a [`crate::pipe::PipelineError`](`crate::pipe::error::Error`).
-    fn run<'pipeline_exec>(&mut self, ctx: &Context<'pipeline_exec>, input: &MapGrid) -> Result<StepOutput, Error>;
+    fn run<'pipeline_exec>(
+        &mut self,
+        ctx: &Context<'pipeline_exec>,
+        input: &MapGrid,
+    ) -> Result<StepOutput, Error>;
 }
 
 /// An entry in the pipeline history.

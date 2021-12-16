@@ -20,7 +20,11 @@ impl SetOutEdgeStep {
 }
 
 impl Step for SetOutEdgeStep {
-    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
+    fn run<'parent>(
+        &mut self,
+        _ctx: &Context<'parent>,
+        current: &MapGrid,
+    ) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
         let (size_x, size_y) = output.size().into();
@@ -56,12 +60,18 @@ impl Step for SetOutEdgeStep {
 struct ReverseEntireGridStep;
 
 impl Step for ReverseEntireGridStep {
-    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
+    fn run<'parent>(
+        &mut self,
+        _ctx: &Context<'parent>,
+        current: &MapGrid,
+    ) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
         for ((x, y), cell) in output.iter_pos_mut() {
-            if cell.is_invalid() { continue; }
+            if cell.is_invalid() {
+                continue;
+            }
             let change = GridChange {
                 row: x,
                 col: y,
@@ -82,17 +92,27 @@ struct SetEntireRowStep {
 }
 
 impl SetEntireRowStep {
-    pub fn new(row: usize, state: TriState) -> Self { Self { row, state } }
+    pub fn new(row: usize, state: TriState) -> Self {
+        Self { row, state }
+    }
 }
 
 impl Step for SetEntireRowStep {
-    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
+    fn run<'parent>(
+        &mut self,
+        _ctx: &Context<'parent>,
+        current: &MapGrid,
+    ) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
         for ((x, y), cell) in output.iter_pos_mut() {
-            if y != self.row { continue; }
-            if cell.state() == self.state { continue; }
+            if y != self.row {
+                continue;
+            }
+            if cell.state() == self.state {
+                continue;
+            }
 
             let change = GridChange {
                 row: x,
@@ -114,17 +134,27 @@ struct SetEntireColumnStep {
 }
 
 impl SetEntireColumnStep {
-    pub fn new(column: usize, state: TriState) -> Self { Self { column, state } }
+    pub fn new(column: usize, state: TriState) -> Self {
+        Self { column, state }
+    }
 }
 
 impl Step for SetEntireColumnStep {
-    fn run<'parent>(&mut self, _ctx: &Context<'parent>, current: &MapGrid) -> Result<StepOutput, Error> {
+    fn run<'parent>(
+        &mut self,
+        _ctx: &Context<'parent>,
+        current: &MapGrid,
+    ) -> Result<StepOutput, Error> {
         let mut changes = Changelist::new();
         let mut output = current.clone();
 
         for ((x, y), cell) in output.iter_pos_mut() {
-            if x != self.column { continue; }
-            if cell.state() == self.state { continue; }
+            if x != self.column {
+                continue;
+            }
+            if cell.state() == self.state {
+                continue;
+            }
 
             let change = GridChange {
                 row: x,
@@ -159,7 +189,14 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), "###\n#.#\n###");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            "###\n#.#\n###"
+        );
     }
 
     #[test]
@@ -175,7 +212,14 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), "###\n###\n###");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            "###\n###\n###"
+        );
     }
 
     #[test]
@@ -191,7 +235,14 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), "...\n###\n...");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            "...\n###\n..."
+        );
     }
 
     #[test]
@@ -207,7 +258,14 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), ".#.\n.#.\n.#.");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            ".#.\n.#.\n.#."
+        );
     }
 
     #[test]
@@ -215,7 +273,10 @@ mod test {
         crate::util::testing::crate_before_test();
 
         let grid = MapGrid::empty((5, 5));
-        assert_eq!(grid.to_strings().join("\n"), ".....\n.....\n.....\n.....\n.....");
+        assert_eq!(
+            grid.to_strings().join("\n"),
+            ".....\n.....\n.....\n.....\n....."
+        );
 
         let mut pipeline = Pipeline::new();
         pipeline.add_step(SetEntireColumnStep::new(1, TriState::True));
@@ -226,7 +287,14 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), ".#.#.\n#####\n.#.#.\n#####\n.#.#.");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            ".#.#.\n#####\n.#.#.\n#####\n.#.#."
+        );
     }
 
     #[test]
@@ -243,13 +311,30 @@ mod test {
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), "...\n.#.\n...");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            "...\n.#.\n..."
+        );
 
         let grid = MapGrid::empty((5, 5));
-        assert_eq!(grid.to_strings().join("\n"), ".....\n.....\n.....\n.....\n.....");
+        assert_eq!(
+            grid.to_strings().join("\n"),
+            ".....\n.....\n.....\n.....\n....."
+        );
         let result = pipeline.run(&grid);
         crate::logging::error!("Result: {:#?}", &result);
         assert!(result.is_ok());
-        assert_eq!(result.expect("Pipeline returned error!").result.to_strings().join("\n"), ".....\n.###.\n.###.\n.###.\n.....");
+        assert_eq!(
+            result
+                .expect("Pipeline returned error!")
+                .result
+                .to_strings()
+                .join("\n"),
+            ".....\n.###.\n.###.\n.###.\n....."
+        );
     }
 }

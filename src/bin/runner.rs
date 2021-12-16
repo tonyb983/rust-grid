@@ -21,7 +21,7 @@ use dungen::{
         size, GridPos, MapGrid, PremadeGridFiles as GridFiles, PremadeGridStrings as GridStrings,
         PremadeGrids,
     },
-    draw::artist::Artist,
+    draw::Artist,
     gen::{
         cell_auto::{Algorithm as CaAlgorithm, CellularAutomata},
         room_based::RoomBased,

@@ -3,26 +3,25 @@ use serde::{Deserialize, Serialize};
 use crate::util::TriState;
 
 /// A simple cell that can be either `on` or `off`. Uses a simple bool for internal state.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct BasicCell(bool);
 
 impl BasicCell {
     /// Creates a new [`BasicCell`] with the given value.
-    #[must_use] 
+    #[must_use]
     pub fn new(value: bool) -> Self {
         Self(value)
     }
 
     /// Creates a [`BasicCell`] that is `on` or `true`.
-    #[must_use] 
+    #[must_use]
     pub fn on() -> Self {
         Self(true)
     }
 
     /// Creates a [`BasicCell`] that is `off` or `false`.
-    #[must_use] 
+    #[must_use]
     pub fn off() -> Self {
         Self(false)
     }
@@ -35,19 +34,19 @@ impl BasicCell {
     }
 
     /// Gets the state of this [`BasicCell`].
-    #[must_use] 
+    #[must_use]
     pub fn state(self) -> bool {
         self.0
     }
 
     /// Returns `true` if this [`BasicCell`] is `off` or `false`.
-    #[must_use] 
+    #[must_use]
     pub fn is_off(self) -> bool {
         !self.state()
     }
 
     /// Returns `true` if this [`BasicCell`] is `on` or `true`.
-    #[must_use] 
+    #[must_use]
     pub fn is_on(self) -> bool {
         self.state()
     }
@@ -66,38 +65,37 @@ impl Default for BasicCell {
 }
 
 /// A simple cell that can be either `on`, `off`, or `invalid`. Uses [`TriState`] for the internal state.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct TriCell(TriState);
 
 impl TriCell {
     /// Creates a new [`TriCell`] with the given value.
-    #[must_use] 
+    #[must_use]
     pub fn new(value: TriState) -> Self {
         Self(value)
     }
 
     /// Creates a [`TriCell`] that is `on` or `true`.
-    #[must_use] 
+    #[must_use]
     pub fn on() -> Self {
         Self(true.into())
     }
 
     /// Creates a [`TriCell`] that is `off` or `false`.
-    #[must_use] 
+    #[must_use]
     pub fn off() -> Self {
         Self(false.into())
     }
 
     /// Creates a [`TriCell`] that is `invalid`.
-    #[must_use] 
+    #[must_use]
     pub fn invalid() -> Self {
         Self(TriState::Invalid)
     }
 
     /// Creates a [`TriCell`] with a random state.
-    #[must_use] 
+    #[must_use]
     pub fn random() -> Self {
         Self(fastrand::bool().into())
     }
@@ -105,7 +103,7 @@ impl TriCell {
 
 impl TriCell {
     /// Get the current state of this [`TriCell`].
-    #[must_use] 
+    #[must_use]
     pub fn state(self) -> TriState {
         self.0
     }
@@ -121,31 +119,31 @@ impl TriCell {
     }
 
     /// Returns true if this [`TriCell`] is `off` or `false`.
-    #[must_use] 
+    #[must_use]
     pub fn is_off(self) -> bool {
         self.state() == TriState::False
     }
 
     /// Returns true if this [`TriCell`] is `on` or `true`.
-    #[must_use] 
+    #[must_use]
     pub fn is_on(self) -> bool {
         self.state() == TriState::True
     }
 
     /// Returns `true` if this [`TriCell`] is `on` or `off`, but not `invalid`.
-    #[must_use] 
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.state() != TriState::Invalid
     }
 
     /// Returns `true` if this [`TriCell`] is `invalid`.
-    #[must_use] 
+    #[must_use]
     pub fn is_invalid(self) -> bool {
         !self.is_valid()
     }
 
     /// Flips the internal state of this [`TriCell`], turning True to False and vice versa.
-    /// 
+    ///
     /// *Invalid is kept as is.*
     pub fn toggle(&mut self) {
         self.0 = self.0.toggle();
@@ -186,15 +184,14 @@ impl From<TriCell> for BasicCell {
 /// A tile enum representing a single tile in a grid of tiles. This will be the base for
 /// a more advanced [`crate::data::MapGrid`] type that can hold more than just `on` and `off`
 /// for each cell.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub enum Tile {
     /// A tile that is `invalid`.
     Invalid,
     /// A tile that is a floor, or walkable.
     Floor,
     /// A tile that is a wall, or not walkable.
-    Wall
+    Wall,
 }
 
 impl Tile {
@@ -211,7 +208,7 @@ impl Tile {
         match self {
             Tile::Invalid => Tile::Invalid,
             Tile::Floor => Tile::Wall,
-            Tile::Wall => Tile::Floor
+            Tile::Wall => Tile::Floor,
         }
     }
 }
@@ -226,8 +223,7 @@ impl From<bool> for Tile {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize)]
 struct TileCell(Tile);
 
 impl TileCell {
@@ -271,7 +267,7 @@ impl TileCell {
     }
 
     /// Flips the internal state of this [`TriCell`], turning True to False and vice versa.
-    /// 
+    ///
     /// *Invalid is kept as is.*
     pub fn toggle(&mut self) {
         self.0 = self.0.toggle();
@@ -331,7 +327,6 @@ impl MapBlock for TileCell {
     fn is_state(&self, state: Tile) -> bool {
         TileCell::state(*self) == state
     }
-    
 }
 
 #[cfg(test)]
