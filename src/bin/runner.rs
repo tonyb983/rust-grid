@@ -27,10 +27,11 @@ use dungen::{
         room_based::RoomBased,
     },
     pf::pathing::Pathfinding,
+    term_menu::{run_long, run_select, run_simple, run_strnum},
     util::{math::get_curve_between, random::init_rng},
 };
 
-const FUNCTION: usize = 20usize;
+const FUNCTION: usize = 22usize;
 
 fn main() {
     let args = init();
@@ -69,6 +70,11 @@ fn main() {
         19 => multiple_serial_compare(),
         20 => compare_algorithms_internal(),
         21 => print_all_maze_strings(),
+        22 => run_simple(),
+        23 => run_select(),
+        24 => run_long(),
+        25 => run_strnum(),
+        26 => dungen::ansi_col::run_basic(),
         _ => println!("No function associated with {}", FUNCTION),
     }
 }
