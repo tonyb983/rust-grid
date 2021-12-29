@@ -1,4 +1,8 @@
-/// ## `Math` Utility Module.
+/// ## `Ansi Color` Utility Module
+/// Contains convenience methods for using ANSI color codes.
+pub mod ansi;
+
+/// ## `Math` Utility Module
 /// Contains various math utility functions.
 ///
 /// #### See [`bresenham_line`](`crate::util::math::bresenham_line`), [`get_curve_between`](`crate::util::math::get_curve_between`), etc.

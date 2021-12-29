@@ -84,7 +84,7 @@ crate mod logging {
     pub(crate) use log::{debug, error, info, trace, warn};
 }
 
-/// Fake main to run from `./bin/runner.rs`.
+/// Fake main to run from `./bin/runner.rs` to test `terminal_menu` library.
 pub mod term_menu {
     enum ExampleLabels {
         List,
@@ -222,8 +222,98 @@ pub mod term_menu {
     }
 }
 
+/// Fake main to run from `./bin/runner.rs` to test ansi coloring.
+#[allow(clippy::wildcard_imports)]
 pub mod ansi_col {
+    /// Basic example
     pub fn run_basic() {
-        println!("{}Colored {}{}text {}{}hopefully!{} (except this)", "\x1b[4;32m", "\x1b[0m", "\x1b[34m", "\x1b[0m", "\x1b[21m", "\x1b[0m");
+        use crate::util::ansi::*;
+
+        println!(
+            "{}Red{} {}Red Underline?{} {}Red Italic Dim?{}",
+            Ansi::new().fg((255, 0, 0)),
+            Ansi::reset(),
+            Ansi::red().underline(),
+            Ansi::reset(),
+            Ansi::red().italic().dim(),
+            Ansi::reset()
+        );
+
+        println!(
+            "{} {} {} {} {}",
+            style_text("Hello", Ansi::red().underline()),
+            style_text("There", Ansi::green().italic()),
+            style_text("Pretty", Ansi::blue().dim()),
+            style_text("Thing", Ansi::from_fg((252, 186, 203)).strike().dim()),
+            style_text("Girl", Ansi::from_fg((252, 186, 203)).blink()),
+        );
+    }
+
+    #[allow(clippy::cast_precision_loss, clippy::let_underscore_drop, missing_docs)]
+    pub fn run_build_compare() {
+        use crate::util::ansi::*;
+        const ITERS: usize = 100_000;
+
+        let basic = Ansi::new();
+        let complex = Ansi::new()
+            .underline()
+            .italic()
+            .fg((200, 100, 200))
+            .bg((255, 255, 255));
+
+        println!("Comparing build functions using {} iterations.", ITERS);
+        println!();
+
+        let start = std::time::Instant::now();
+        for _ in 0..ITERS {
+            let _ = basic.build_string();
+        }
+        let basic_s = start.elapsed();
+
+        let start = std::time::Instant::now();
+        for _ in 0..ITERS {
+            let _ = basic.build_vec();
+        }
+        let basic_v = start.elapsed();
+
+        let start = std::time::Instant::now();
+        for _ in 0..ITERS {
+            let _ = complex.build_string();
+        }
+        let complex_s = start.elapsed();
+
+        let start = std::time::Instant::now();
+        for _ in 0..ITERS {
+            let _ = complex.build_vec();
+        }
+        let complex_v = start.elapsed();
+
+        println!("{}", style_text("build_string", Ansi::green().underline()));
+        println!(
+            "\t{:<10} {:?} average ({:?} total)",
+            style_text("basic", Ansi::from_fg((25, 200, 25))),
+            basic_s.div_f64(ITERS as f64),
+            basic_s
+        );
+        println!(
+            "\t{:<10} {:?} average ({:?} total)",
+            style_text("complex", Ansi::from_fg((25, 200, 25))),
+            complex_s.div_f64(ITERS as f64),
+            complex_s
+        );
+        println!();
+        println!("{}", style_text("build_vec", Ansi::green().underline()));
+        println!(
+            "\t{:<10} {:?} average ({:?} total)",
+            style_text("basic", Ansi::from_fg((25, 200, 25))),
+            basic_v.div_f64(ITERS as f64),
+            basic_v
+        );
+        println!(
+            "\t{:<10} {:?} average ({:?} total)",
+            style_text("complex", Ansi::from_fg((25, 200, 25))),
+            complex_v.div_f64(ITERS as f64),
+            complex_v
+        );
     }
 }

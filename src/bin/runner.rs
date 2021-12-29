@@ -31,7 +31,7 @@ use dungen::{
     util::{math::get_curve_between, random::init_rng},
 };
 
-const FUNCTION: usize = 22usize;
+const FUNCTION: usize = 27usize;
 
 fn main() {
     let args = init();
@@ -75,6 +75,7 @@ fn main() {
         24 => run_long(),
         25 => run_strnum(),
         26 => dungen::ansi_col::run_basic(),
+        27 => dungen::ansi_col::run_build_compare(),
         _ => println!("No function associated with {}", FUNCTION),
     }
 }
