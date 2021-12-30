@@ -1334,12 +1334,12 @@ impl MapGrid {
             new_column_size
         };
 
-        if safe_size == self.cols() {
+        if safe_size == self.rows() {
             info!("MapGrid::resize_cols_with - new size same as current size, bailing on resize");
             return;
         }
 
-        let row_size = self.rows();
+        let row_size = self.cols();
         self.cells.resize(safe_size, vec![cell_value; row_size]);
         assert!(
             self.cells.len() == safe_size,
@@ -1352,10 +1352,10 @@ impl MapGrid {
 
     /// Convenience function which calls:
     /// ```
-    /// # use crate::data::MapGrid;
+    /// # use dungen::data::MapGrid;
     /// # let mut grid = MapGrid::new((5, 5));
     /// # assert!(grid.cell_count() == 25);
-    /// # let size = (10,10)
+    /// # let size = (10,10);
     /// grid.resize_rows(size.0);
     /// grid.resize_cols(size.1);
     /// # assert!(grid.cell_count() == 100);
@@ -2160,5 +2160,19 @@ mod tests {
         assert_float_relative_eq!(on, (2.0 / 3.0));
         assert_float_relative_eq!(off, (1.0 / 3.0));
         assert_float_absolute_eq!(inv, 0.0);
+    }
+
+    #[test]
+    fn resize_works() {
+        init();
+
+        let mut grid = MapGrid::empty((5, 5));
+        assert_eq!(grid.cell_count(), 25);
+        let size = (10,10);
+        let cell_value = Cell::on();
+        grid.resize_rows_with(size.0, cell_value);
+        grid.resize_cols_with(size.1, cell_value);
+        warn!("{}", grid.to_string());
+        assert_eq!(grid.cell_count(), 100);
     }
 }

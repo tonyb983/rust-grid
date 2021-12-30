@@ -24,7 +24,7 @@ mod cell;
 ///
 /// /// A new MapGrid full of 25 cells.
 /// let mut grid = MapGrid::empty((5, 5));
-/// assert_eq!(grid.to_strings().join("\n"), ".....\n.....\n.....\n.....\n.....\n");
+/// assert_eq!(grid.to_strings().join("\n"), ".....\n.....\n.....\n.....\n.....");
 ///
 /// /// Set the edges of the grid to ON
 /// assert!(grid.cell((0, 0)).unwrap().is_off());
@@ -32,7 +32,7 @@ mod cell;
 /// grid.set_outer_cells(true);
 /// assert!(grid.cell((0, 0)).unwrap().is_on());
 /// assert!(grid.cell((4, 4)).unwrap().is_on());
-/// assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#...#\n#...#\n#####\n");
+/// assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#...#\n#...#\n#####");
 ///
 /// /// Iterate over all cells
 /// for cell in grid.iter() {
@@ -46,7 +46,7 @@ mod cell;
 ///    }
 /// }
 ///
-/// assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#.#.#\n#...#\n#####\n");
+/// assert_eq!(grid.to_strings().join("\n"), "#####\n#...#\n#.#.#\n#...#\n#####");
 /// ```
 mod grid;
 

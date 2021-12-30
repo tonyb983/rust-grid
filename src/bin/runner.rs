@@ -38,7 +38,7 @@ fn main() {
 
     let input = if args.is_empty() {
         FUNCTION
-    } else if args[0].starts_with("h") {
+    } else if args[0].starts_with('h') {
         println!("{}", help());
 
         return;
