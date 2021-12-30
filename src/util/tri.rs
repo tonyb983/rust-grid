@@ -323,8 +323,12 @@ mod tests {
     fn tri_state_to_bool() {
         assert!(!bool::from(TriState::False));
         assert!(bool::from(TriState::True));
+    }
 
-        std::panic::catch_unwind(|| bool::from(TriState::Invalid)).unwrap_err();
+    #[test]
+    #[should_panic]
+    fn tri_state_to_bool_panics() {
+        let _ = bool::from(TriState::Invalid);
     }
 
     #[test]
