@@ -408,7 +408,7 @@ impl MapGrid {
     }
 
     /// Convenience function which calls:
-    /// ```
+    /// ```ignore
     /// # use dungen::data::MapGrid;
     /// # use dungen::data::Cell;
     /// # let mut grid = MapGrid::new((5, 5));
@@ -1351,7 +1351,7 @@ impl MapGrid {
     }
 
     /// Convenience function which calls:
-    /// ```
+    /// ```ignore
     /// # use dungen::data::MapGrid;
     /// # let mut grid = MapGrid::new((5, 5));
     /// # assert!(grid.cell_count() == 25);
