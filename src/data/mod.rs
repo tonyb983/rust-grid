@@ -11,7 +11,7 @@ mod cell;
 /// for manipulating, modifying, and querying the grid.
 ///
 /// Basic Examples:
-/// ```ignore
+/// ```
 /// # use dungen::data::MapGrid;
 /// # use dungen::util::TriState;
 /// # use dungen::data::Cell;

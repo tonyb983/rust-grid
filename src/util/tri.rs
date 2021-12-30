@@ -33,7 +33,24 @@ pub enum TriState {
 }
 
 impl TriState {
-    /// Create a [`TriState::True`].
+    /// Creates a [`TriState`] with a value of [`True`].
+    ///
+    /// ## Returns
+    /// A newly created [`TriState::True`].
+    /// ## Errors
+    /// - Function errors if yada-yada-yada
+    /// ## Panics
+    /// - Function panics if yada-yada-yada
+    /// ## Example(s)
+    /// This is how to use this function and win at [`Life`] and [`Death`]
+    /// ```
+    /// # // Hidden line
+    /// let foo = 2usize;
+    /// assert_eq!(foo, 2usize);
+    /// ```
+    /// Doc comment links are done as such:
+    /// [`Life`]: <https://en.wikipedia.org/wiki/Life_(video_game)>
+    /// [`Death`]: traits.Death.html
     #[must_use]
     pub fn on() -> Self {
         TriState::True

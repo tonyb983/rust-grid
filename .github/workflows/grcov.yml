@@ -9,8 +9,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
+          # - macOS-latest
+          # - windows-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -29,23 +29,14 @@ jobs:
           args: --all
         env:
           CARGO_INCREMENTAL: 0
-          RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zunstable-options -Cpanic=abort -Zpanic_abort_tests"
-
-      # Note that `actions-rs/grcov` Action can install `grcov` too,
-      # but can't use faster installation methods yet.
-      # As a temporary experiment `actions-rs/install` Action plugged in here.
-      # Consider **NOT** to copy that into your workflow,
-      # but use `actions-rs/grcov` only
-      # - name: Pre-installing grcov
-      #   uses: actions-rs/install@v0.1
-      #   with:
-      #     crate: grcov
-      #     use-tool-cache: true
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+          RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
 
       - name: Gather coverage data
         id: coverage
         uses: actions-rs/grcov@v0.1
         with:
+          config: configs/grcov.yml
           coveralls-token: ${{ secrets.COVERALLS_TOKEN }}
 
       - name: Coveralls upload

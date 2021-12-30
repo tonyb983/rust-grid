@@ -25,7 +25,7 @@ pub mod random;
 /// ***Definitely*** Trusted by Microsoft.
 ///
 /// ## Old, slow, ancient, unsafe code
-/// ```ignore
+/// ```
 /// let foo = true;
 /// if foo {
 ///     println!("Hello, world!");
@@ -41,7 +41,7 @@ pub mod random;
 /// ```
 ///
 /// ## New, fast, web-scale, safe code
-/// ```ignore
+/// ```
 /// # use dungen::util::TriState;
 /// // Clean and easy to read
 /// let foo = TriState::True;

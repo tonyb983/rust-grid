@@ -408,7 +408,7 @@ impl MapGrid {
     }
 
     /// Convenience function which calls:
-    /// ```ignore
+    /// ```
     /// # use dungen::data::MapGrid;
     /// # use dungen::data::Cell;
     /// # let mut grid = MapGrid::new((5, 5));
@@ -465,7 +465,6 @@ impl MapGrid {
         result
     }
 
-    /// ## [`MapGrid::parse_string`]
     /// Attempts to parse a string into a grid, using the given on and off characters to determine
     /// the state of each cell. Will return a new [`MapGrid`] if the string is successfully parsed,
     /// or a [`String`] containing the error message if it fails.
@@ -1351,7 +1350,7 @@ impl MapGrid {
     }
 
     /// Convenience function which calls:
-    /// ```ignore
+    /// ```
     /// # use dungen::data::MapGrid;
     /// # let mut grid = MapGrid::new((5, 5));
     /// # assert!(grid.cell_count() == 25);

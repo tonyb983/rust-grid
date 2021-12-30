@@ -137,7 +137,7 @@ pub fn get_curve_between<P1: Into<(usize, usize)>, P2: Into<(usize, usize)>>(
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use pathfinding::utils::uint_sqrt;
 ///
 /// assert_eq!(uint_sqrt(100usize), Some(10));
@@ -158,7 +158,7 @@ where
 ///
 /// The absolute difference between 4 and 17 as unsigned values will be 13.
 ///
-/// ```ignore
+/// ```
 /// use pathfinding::utils::absdiff;
 ///
 /// assert_eq!(absdiff(4u32, 17u32), 13u32);
