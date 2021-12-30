@@ -12,8 +12,8 @@ mod cell;
 ///
 /// Basic Examples:
 /// ```
-/// # use dungen::data::grid::MapGrid;
-/// # use dungen::util::tri::TriState;
+/// # use dungen::data::MapGrid;
+/// # use dungen::util::TriState;
 /// # use dungen::data::Cell;
 ///
 /// /// A new MapGrid full of 100 invalid cells.

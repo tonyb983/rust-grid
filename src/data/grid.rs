@@ -411,9 +411,9 @@ impl MapGrid {
     /// ```
     /// # use dungen::data::MapGrid;
     /// # use dungen::data::Cell;
-    /// # let mut grid = MapGrid::new(5, 5);
+    /// # let mut grid = MapGrid::new((5, 5));
     /// # assert!(grid.cell_count() == 25);
-    /// # let size = (10,10)
+    /// # let size = (10,10);
     /// # let cell_value = Cell::on();
     /// grid.resize_rows_with(size.0, cell_value);
     /// grid.resize_cols_with(size.1, cell_value);
@@ -1352,7 +1352,8 @@ impl MapGrid {
 
     /// Convenience function which calls:
     /// ```
-    /// # let mut grid = MapGrid::new(5, 5);
+    /// # use crate::data::MapGrid;
+    /// # let mut grid = MapGrid::new((5, 5));
     /// # assert!(grid.cell_count() == 25);
     /// # let size = (10,10)
     /// grid.resize_rows(size.0);

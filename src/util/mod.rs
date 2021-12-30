@@ -42,6 +42,7 @@ pub mod random;
 ///
 /// ## New, fast, web-scale, safe code
 /// ```
+/// # use dungen::util::TriState;
 /// // Clean and easy to read
 /// let foo = TriState::True;
 /// if foo.into() {

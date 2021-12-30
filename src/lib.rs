@@ -31,15 +31,6 @@
     rust_2021_compatibility,
     rustdoc::all
 )]
-// Justifications:
-// - `clippy::module_name_repititions` - This is maybe something I can be better about but for now it's okay in my book.
-// - `clippy::semicolon_if_nothing_returned` - This interferes with the `let_else` feature syntax.
-// - `clippy::similar_names` - This interferes with functions that use a lot of intermediate variables (usually for debugging).
-// #![allow(
-//     clippy::module_name_repetitions,
-//     clippy::semicolon_if_nothing_returned,
-//     clippy::similar_names
-// )]
 
 /// ## `Data` Module
 /// The main data types for the library.

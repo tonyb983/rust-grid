@@ -38,6 +38,10 @@ fn main() {
 
     let input = if args.is_empty() {
         FUNCTION
+    } else if args[0].starts_with("h") {
+        println!("{}", help());
+
+        return;
     } else {
         match args[0].parse() {
             Ok(n) => n,
@@ -91,6 +95,41 @@ fn init() -> Vec<String> {
     println!("Args: {:?}", args);
 
     args
+}
+
+fn help() -> &'static str {
+    "
+    Usage:
+        dungen --bin runner [function]
+
+    Functions:
+        0 - Simple Artist
+        2 - Tiny Skia First
+        3 - Compare cellular automata first fill
+        4 - Compare cellular automata first param
+        5 - Compare cellular automata firsts
+        6 - PF Grid
+        7 - Pathfinding Comparison
+        8 - File Loading
+        9 - Compare maps and algorithms
+        10 - Basic Room Generator
+        11 - Tiered Room Generator
+        12 - Generate various sizes
+        13 - Curve and Cell Auto Test
+        14 - Curves
+        15 - JSON Serial Test
+        16 - MsgPack Serial Test
+        18 - Grid Tests
+        19 - Multiple Serial Comparison
+        20 - Compare algorithms internal
+        21 - Print all maze strings
+        22 - Run simple
+        23 - Run select
+        24 - Run long
+        25 - Run strnum
+        26 - ANSI Col Test
+        27 - ANSI Col Build Comparison
+    "
 }
 
 fn print_all_maze_strings() {
