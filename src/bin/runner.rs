@@ -1,9 +1,4 @@
-//! # Dungen
-//!
-//! My experimentation with all things procedurally generated, pathfinding, 2D grid / matrix operations, etc.
-//!
-//! Eventual goal is to have a library that creates "dungeons" for "games", whatever those
-//! words mean to me at the moment.
+//! # `Runner` - Fake main for `dungen` library.
 
 #![feature(let_else, slice_group_by)]
 

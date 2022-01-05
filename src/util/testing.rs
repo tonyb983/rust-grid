@@ -41,9 +41,21 @@ mod tests {
 
     #[test]
     fn assert_contains_all_works() {
+        crate_before_test();
+
         let haystack = vec!["a", "b", "c", "d"];
         let needle = vec!["a", "c"];
 
         assert_contains_all!(needle, haystack);
+    }
+
+    #[test]
+    fn assert_unordered_match_works() {
+        crate_before_test();
+
+        let haystack = vec!["a", "b", "c", "d"];
+        let needle = vec!["d", "a", "c", "b"];
+
+        assert_unordered_match!(needle, haystack);
     }
 }
