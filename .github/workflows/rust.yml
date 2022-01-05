@@ -50,13 +50,13 @@ jobs:
           command: test
 
   lints:
-    name: Lints
+    name: Clippy + rustfmt
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -66,14 +66,14 @@ jobs:
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
-        continue-on-error: true  # Error is fine on linting I think
+        continue-on-error: true  # Error is fine for lints I think
         with:
           command: fmt
           args: --all -- --check
 
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
-        continue-on-error: true  # Error is fine on linting I think
+        continue-on-error: true  # Error is fine for lints I think
         with:
           command: clippy
-          args: -- -D warnings
+          args: -- -D warning
