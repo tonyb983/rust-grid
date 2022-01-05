@@ -107,7 +107,7 @@ impl Ansi {
     }
 
     /// Returns `true` if this `Ansi` has no styling.
-    #[must_use] 
+    #[must_use]
     pub fn is_default(&self) -> bool {
         self.fg.is_none() && self.bg.is_none() && self.flags.is_empty()
     }
@@ -191,16 +191,15 @@ impl Ansi {
     }
 
     /// Creates a string from this `Ansi` using a `String` to store temporary data.
-    /// 
+    ///
     /// ### This function is currently only public so that comparisons can be made between it and `build_vec`
     #[allow(dead_code)]
-    #[must_use] 
+    #[must_use]
     pub fn build_string(&self) -> String {
         if self.is_default() {
             return "".to_string();
         }
 
-        
         let mut modified = false;
         let mut ansi = String::with_capacity(20);
 
@@ -282,10 +281,10 @@ impl Ansi {
     }
 
     /// Creates a string from this `Ansi` using a `Vec` to store temporary data.
-    /// 
+    ///
     /// ### This function is currently only public so that comparisons can be made between it and `build_string`
     #[allow(dead_code)]
-    #[must_use] 
+    #[must_use]
     pub fn build_vec(&self) -> String {
         if self.is_default() {
             return "".to_string();
@@ -356,7 +355,10 @@ pub trait IntoAnsi {
     fn to_ansi(self) -> Ansi;
 }
 
-impl<T> IntoAnsi for T where T: Fn() -> Ansi {
+impl<T> IntoAnsi for T
+where
+    T: Fn() -> Ansi,
+{
     fn to_ansi(self) -> Ansi {
         self()
     }
@@ -424,11 +426,14 @@ mod tests {
                 .italic()
                 .fg((200, 100, 200))
                 .bg((255, 255, 255));
-            
+
             style.strike()
         });
 
-        let manual_prefix = format!("{}{}{}", DISPLAY_PRE, "3;4;9;38;2;200;100;200;48;2;255;255;255", DISPLAY_SUF);
+        let manual_prefix = format!(
+            "{}{}{}",
+            DISPLAY_PRE, "3;4;9;38;2;200;100;200;48;2;255;255;255", DISPLAY_SUF
+        );
         let manual_suffix = format!("{}{}{}", DISPLAY_PRE, "0", DISPLAY_SUF);
         let third = format!("{}{}{}", manual_prefix, first, manual_suffix);
 

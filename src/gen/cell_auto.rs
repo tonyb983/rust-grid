@@ -302,14 +302,15 @@ impl CellularAutomata {
 mod tests {
     use super::*;
 
-    use crate::util::testing::crate_before_test;
     use crate::data::MapGrid;
+    use crate::util::testing::crate_before_test;
 
     #[test]
     fn ca_first() {
         crate_before_test();
 
-        let original = MapGrid::parse_string("...\n.#.\n...", '#', '.').expect("Unable to parse standard grid string");
+        let original = MapGrid::parse_string("...\n.#.\n...", '#', '.')
+            .expect("Unable to parse standard grid string");
         let result = CellularAutomata::execute_on(&original, 1, Algorithm::first(4, 5));
         assert_eq!(result.to_strings().join("\n"), "...\n...\n...");
     }

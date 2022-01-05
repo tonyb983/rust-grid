@@ -2167,7 +2167,7 @@ mod tests {
 
         let mut grid = MapGrid::empty((5, 5));
         assert_eq!(grid.cell_count(), 25);
-        let size = (10,10);
+        let size = (10, 10);
         let cell_value = Cell::on();
         grid.resize_rows_with(size.0, cell_value);
         grid.resize_cols_with(size.1, cell_value);
