@@ -1,9 +1,22 @@
 //! This module is a potential basis for a test framework / harness. Some skeletal framework code is implemented in
-//! [`TestModule`](`crate::util::testing::TestModule`) and [`TestUnit`](`crate::util::testing::TestUnit`).
+//! [TestModule] and [TestUnit].
 //! Currently nothing uses or tests this code, and it is very much a work in progress
 //! (and is likely as buggy as those words usually suggest).
 //!
-#![allow(dead_code, unused)]
+//! Here is an idea of how these pieces would fit together to form a rust test framework. Some of this was inspired /
+//! borrowed / stolen from [this great blog post] on creating a custom test harness in rust.
+//!
+//! [TestUnit] - This is a single unit test. It is a single test function, an associated name (ideally I'd like to have this be pulled automatically from the function name, which I believe can only be done via macro in the current state of rust "reflection" type capability), an optional "before test" function, an optional "after test" function, and a boolean flag to indicate whether or not the test should panic. Future additions should include a collection of tags associated with the test, and maybe a flag to indicate whether or not the test should be run. Combined these would allow for fine grain control over which tests are run.
+//!
+//! [TestModule] - This is a collection of [TestUnit]s, ideally centered around one module or one functionality. This would be a [Vec] or other collection type containing the individual tests, an optional "before all tests" function, and an optional "after all tests" function.
+//!
+//! A crate such as [inventory] could be used to collect all of the [TestModule]s into a single "collection" to be run.
+//!
+//! [TestUnit]: crate::util::test_framework::TestUnit
+//! [TestModule]: crate::util::test_framework::TestModule
+//! [inventory]: https://crates.io/crates/inventory
+//! [this great blog post]: https://www.infinyon.com/blog/2021/04/rust-custom-test-harness
+#![allow(clippy::doc_markdown, dead_code, unused)]
 
 /// A simple test runner function.
 /// Steps:
@@ -30,16 +43,16 @@
 /// }
 ///
 /// fn before_all_tests() {
-///     // Set up logging or seed rng or etc etc
+///     // Set up logging, seed rng, etc. etc.
 /// }
 ///
 /// fn after_all_tests() {
-///     // Some sort of teardown after all tests have run.
+///     // Write log to file, close some resource, etc. etc.
 /// }
 ///
 /// // This function gets the test attribute, which will in turn call the above tests and assert on the result.
 /// #[test]
-/// fn test_something_interesting() {
+/// fn test_my_module() {
 ///     run_tests(
 ///         before_all_tests,
 ///         after_all_tests,
@@ -65,7 +78,6 @@ crate fn run_tests(setup: fn(), teardown: fn(), tests: Vec<fn()>) {
     }
 }
 
-#[allow(dead_code)]
 crate struct TestUnit {
     name: &'static str,
     test: fn(),
@@ -74,7 +86,6 @@ crate struct TestUnit {
     after: Option<fn()>,
 }
 
-#[allow(dead_code)]
 impl TestUnit {
     crate fn basic(name: &'static str, test: fn()) -> TestUnit {
         TestUnit {
@@ -138,14 +149,12 @@ impl TestUnit {
     }
 }
 
-#[allow(dead_code)]
 crate struct TestModule {
     setup: fn(),
     teardown: fn(),
     tests: Vec<TestUnit>,
 }
 
-#[allow(dead_code)]
 impl TestModule {
     crate fn new<T: Into<TestUnit>>(
         setup: fn(),

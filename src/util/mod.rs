@@ -2,6 +2,13 @@
 /// Contains convenience methods for using ANSI color codes.
 pub mod ansi;
 
+/// ## `Extensions` Module
+/// Shamelessly *borrowed* from [this blog post](`https://lucumr.pocoo.org/2022/1/6/rust-extension-map/`).
+mod extmap;
+pub use extmap::{ExtensionMap, LockingExtensionMap};
+
+mod handles;
+
 /// ## `Math` Utility Module
 /// Contains various math utility functions.
 ///

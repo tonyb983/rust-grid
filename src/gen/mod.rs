@@ -1,12 +1,12 @@
-/// `CellularAutomata` Module
+/// `CellularAutomata` Generation Module
 ///
 /// Contains algorithms meant to run on [`crate::data::MapGrid`].
 pub mod cell_auto;
-/// `RoomBasedGen` Module
+/// `RoomBased` Generation Module
 ///
 /// Contains the [`crate::gen::RoomBasedGenerator`].
 pub mod room_based;
-/// `Rooms` Module
+/// `Rooms` Generation Module
 ///
 /// Contains the data-types for the [`crate::gen::RoomBasedGenerator`].
 pub mod rooms;

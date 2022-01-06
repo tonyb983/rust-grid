@@ -439,7 +439,7 @@ impl MapGrid {
     /// `other` [`MapGrid`], prioritizing the data in `other` for any conflicts.
     #[must_use]
     pub fn union(first: &Self, other: &Self) -> Self {
-        Self::integrate(first, other, (0, 0).into())
+        Self::integrate(first, other, (0, 0))
     }
 
     /// Creates a new [`MapGrid`] using the existing data from this instance,
@@ -447,7 +447,7 @@ impl MapGrid {
     ///
     /// #### Does *not* modify the original existing instance.
     #[must_use]
-    pub fn integrate(first: &Self, other: &Self, offset: GridPos) -> Self {
+    pub fn integrate<P: Into<(usize,usize)>>(first: &Self, other: &Self, offset: P) -> Self {
         let (other_width, other_height) = other.size().into();
         let (self_width, self_height) = first.size().into();
         let (start_x, start_y) = offset.into();
@@ -2173,5 +2173,24 @@ mod tests {
         grid.resize_cols_with(size.1, cell_value);
         warn!("{}", grid.to_string());
         assert_eq!(grid.cell_count(), 100);
+    }
+
+    #[test]
+    fn combining_grids() {
+        let grid1 = MapGrid::parse_string("#...#\n.....\n.....\n.....\n#...#", '#', '.')
+            .expect("Failed to parse standard grid, something is very wrong.");
+        assert_eq!(grid1.size(), (5, 5).into());
+        let grid2 = MapGrid::parse_string(".....\n.###.\n.###.\n.###.\n.....", '#', '.')
+            .expect("Failed to parse standard grid, something is very wrong.");
+        assert_eq!(grid2.size(), (5, 5).into());
+        let grid3 = MapGrid::parse_string("###\n###\n###", '#', '.')
+            .expect("Failed to parse standard grid, something is very wrong.");
+        assert_eq!(grid3.size(), (3, 3).into());
+
+        let union = MapGrid::union(&grid1, &grid3);
+        assert_eq!(union.to_strings().join("\n"), "###.#\n###..\n###..\n.....\n#...#");
+
+        let integrated = MapGrid::integrate(&grid1, &grid3, (2, 2));
+        assert_eq!(integrated.to_strings().join("\n"), "#...#\n.....\n..###\n..###\n#.###");
     }
 }
